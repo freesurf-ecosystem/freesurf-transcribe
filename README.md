@@ -6,7 +6,7 @@ Record or import audio, and get a full transcript with speaker labels, timestamp
 
 ## Why it's free
 
-The transcriber uses [faster-whisper](https://github.com/SYSTRAN/faster-whisper) for transcription and [pyannote.audio](https://github.com/pyannote/pyannote-audio) for speaker diarization — both self-hosted on our own GPU infrastructure. No per-minute API fees. The app is supported by minimal, non-intrusive ads. No subscription ever.
+The transcriber uses [faster-whisper](https://github.com/SYSTRAN/faster-whisper) for transcription and [pyannote.audio](https://github.com/pyannote/pyannote-audio) for speaker diarization — both self-hosted on our own GPU infrastructure. No per-minute API fees. The app is supported by minimal, non-intrusive ads. Premium removes ads.
 
 ## Privacy
 
