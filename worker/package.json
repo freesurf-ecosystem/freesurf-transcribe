@@ -1,0 +1,14 @@
+{
+  "name": "freesurf-transcriber-worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.0.0",
+    "typescript": "~5.6.0",
+    "wrangler": "^4.112.0"
+  }
+}
