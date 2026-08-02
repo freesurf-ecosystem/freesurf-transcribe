@@ -7,10 +7,14 @@ import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system";
 import * as DocumentPicker from "expo-document-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { supabase } from "../lib/supabase";
+import TopBar from "../components/TopBar";
 
 import { WORKER_URL } from "../lib/config";
 const HISTORY_KEY = "freesurf-transcriber-history";
 const SPEAKER_COLORS = ["#5b8cff", "#78e6c4", "#f0a060", "#c084fc", "#60c0f0"];
+
+type Props = { isLoggedIn: boolean; onSignIn: () => void; };
 
 type Segment = {
   speaker: string;
@@ -27,7 +31,7 @@ type TranscribeResult = {
   model?: string;
 };
 
-export default function TranscriberScreen() {
+export default function TranscriberScreen({ isLoggedIn, onSignIn }: Props) {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<TranscribeResult | null>(null);
@@ -153,9 +157,13 @@ export default function TranscriberScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.brand}>FreeSurf</Text>
-        <Text style={styles.title}>Transcriber</Text>
-        <Text style={styles.historyBadge}>{historyCount > 0 ? `${historyCount} saved` : ""}</Text>
+        <TopBar
+          appName="FreeSurf Transcriber"
+          isLoggedIn={isLoggedIn}
+          onSignIn={onSignIn}
+          onSignOut={async () => { await supabase.auth.signOut(); }}
+          menuItems={[{ label: `${historyCount} saved`, onPress: () => {} }]}
+        />
       </View>
 
       <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
