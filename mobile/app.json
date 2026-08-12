@@ -1,14 +1,75 @@
 {
   "expo": {
-    "name": "FreeSurf Transcriber",
+    "name": "Transcriber",
     "slug": "freesurf-transcriber",
     "version": "0.1.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "scheme": "freesurf-transcriber",
-    "splash": { "backgroundColor": "#0b1020" },
-    "android": { "package": "tools.freesurf.transcriber", "versionCode": 1 },
-    "ios": { "bundleIdentifier": "tools.freesurf.transcriber", "infoPlist": { "NSUserTrackingUsageDescription": "Your device identifier is used to serve personalized ads and keep FreeSurf free." } },
-    "extra": { "eas": { "projectId": "" } }
+    "splash": {
+      "backgroundColor": "#0b1020"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "tools.freesurf.transcriber",
+      "versionCode": 1
+    },
+    "ios": {
+      "bundleIdentifier": "tools.freesurf.transcriber",
+      "infoPlist": {
+        "NSUserTrackingUsageDescription": "Your device identifier is used to serve personalized ads and keep FreeSurf free.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "C617.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "C617.1"
+            ]
+          }
+        ]
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c6ee1457-2bbf-4166-902f-60429d94499a"
+      }
+    },
+    "owner": "freesurf",
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "35.0.0",
+            "useLegacyPackaging": false
+          }
+        }
+      ]
+    ]
   }
 }

@@ -27,7 +27,7 @@ try:
     print(f"CUDA available: {torch.cuda.is_available()}", flush=True)
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}", flush=True)
-        print(f"VRAM: {torch.cuda.get_device_properties(0).total_mem / 1024**3:.0f}GB", flush=True)
+        print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.0f}GB", flush=True)
     print("All imports OK", flush=True)
 except Exception:
     traceback.print_exc()
@@ -63,7 +63,7 @@ def get_diarization_pipeline():
         print("Loading pyannote diarization pipeline...", flush=True)
         _diarization_pipeline = Pipeline.from_pretrained(
             "pyannote/speaker-diarization-3.1",
-            use_auth_token=hf_token,
+            token=hf_token,
         )
         print("Diarization pipeline ready", flush=True)
     return _diarization_pipeline

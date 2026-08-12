@@ -2,12 +2,18 @@
 # CUDA 12.4 (matching RunPod GPU drivers)
 FROM nvidia/cuda:12.4.0-runtime-ubuntu22.04
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3.11 python3.11-venv python3.11-dev python3-pip git curl \
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends software-properties-common \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends \
+    python3.12 python3.12-venv python3.12-dev git curl \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 \
+    && python3 -m ensurepip --upgrade \
     && python3 -m pip install --upgrade pip
 
 # PyTorch with CUDA 12.4 (needed by faster-whisper)
