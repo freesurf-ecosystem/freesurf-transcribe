@@ -9,3 +9,5 @@ ios/
 *.log
 .DS_Store
 .wrangler/
+mobile/credentials.json
+mobile/credentials/
