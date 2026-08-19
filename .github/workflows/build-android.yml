@@ -96,6 +96,18 @@ jobs:
         working-directory: mobile/android
         run: bash ./gradlew bundleRelease assembleRelease
 
+      - name: Check 16 KB page alignment
+        working-directory: mobile/android/app/build/outputs/bundle/release
+        run: |
+          echo "=== .so ELF alignment (0x4000 = 16 KB OK, 0x1000 = 4 KB FAIL) ==="
+          AAB=$(ls *.aab | head -1)
+          rm -rf /tmp/aab && mkdir -p /tmp/aab
+          unzip -o "$AAB" "base/lib/arm64-v8a/*.so" -d /tmp/aab > /dev/null
+          for f in /tmp/aab/base/lib/arm64-v8a/*.so; do
+            align=$(readelf -lW "$f" 2>/dev/null | awk '/LOAD/{print $NF}' | sort | tail -1)
+            printf '%-45s %s\n' "$(basename "$f")" "${align:-?}"
+          done
+
       - name: Upload AAB (Google Play)
         uses: actions/upload-artifact@v4
         with:
