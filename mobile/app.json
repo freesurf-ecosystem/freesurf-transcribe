@@ -20,6 +20,7 @@
     "ios": {
       "bundleIdentifier": "tools.freesurf.transcriber",
       "infoPlist": {
+        "NSMicrophoneUsageDescription": "FreeSurf Transcriber uses your microphone to record meetings, interviews, and voice notes so it can turn them into text transcripts. Audio is processed on our servers and immediately deleted — nothing is stored.",
         "NSUserTrackingUsageDescription": "Your device identifier is used to serve personalized ads and keep FreeSurf free.",
         "ITSAppUsesNonExemptEncryption": false
       },
@@ -59,13 +60,14 @@
     },
     "owner": "freesurf",
     "plugins": [
+      "expo-tracking-transparency",
       [
         "expo-build-properties",
         {
           "android": {
-            "compileSdkVersion": 35,
-            "targetSdkVersion": 35,
-            "buildToolsVersion": "35.0.0",
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "buildToolsVersion": "36.0.0",
             "ndkVersion": "27.1.12297006",
             "useLegacyPackaging": false
           }
