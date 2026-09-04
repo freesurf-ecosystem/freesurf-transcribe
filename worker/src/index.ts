@@ -4,6 +4,48 @@
  */
 export interface Env {
   POD_URL: string;
+  DEEPGRAM_API_KEY?: string;
+}
+
+function b64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+// Deepgram Nova-3 with diarization → returns the same { segments, text } shape the
+// pod (faster-whisper + pyannote) produced, so mobile is unchanged.
+async function transcribeWithDeepgram(
+  apiKey: string,
+  audio: Uint8Array,
+  language?: string
+): Promise<{ segments: any[]; text: string; language: string; duration?: number }> {
+  const qs = new URLSearchParams({ model: "nova-3", diarize: "true", utterances: "true", smart_format: "true" });
+  if (language && language !== "auto") qs.set("language", language);
+  const res = await fetch(`https://api.deepgram.com/v1/listen?${qs.toString()}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "audio/mp4" },
+    body: audio,
+  });
+  const data = (await res.json()) as any;
+  if (!res.ok) {
+    throw new Error(data?.err_msg || data?.message || `Deepgram error ${res.status}`);
+  }
+  const alt = data?.results?.channels?.[0]?.alternatives?.[0] || {};
+  const utterances = (data?.results?.utterances || []).map((u: any, i: number) => ({
+    speaker: u.speaker ?? i,
+    start: u.start,
+    end: u.end,
+    text: u.transcript,
+  }));
+  const segments = utterances.length ? utterances : [{ speaker: 0, start: 0, end: alt.duration || 0, text: alt.transcript }];
+  return {
+    segments,
+    text: (alt.transcript || segments.map((s: any) => s.text).join(" ")).trim(),
+    language: (data?.metadata?.language || language || "en"),
+    duration: alt.duration,
+  };
 }
 
 const ALLOWED_ORIGINS = [
@@ -109,7 +151,7 @@ export default {
       return jsonResponse({ error: "Not found" }, 404, headers);
     }
 
-    if (!env.POD_URL) {
+    if (!env.POD_URL && !env.DEEPGRAM_API_KEY) {
       return jsonResponse({ error: "Transcription not configured" }, 500, headers);
     }
 
@@ -117,6 +159,16 @@ export default {
       const body = (await request.json()) as { audio_base64: string; language?: string };
       if (!body.audio_base64) {
         return jsonResponse({ error: "No audio data provided" }, 400, headers);
+      }
+
+      // Hosted Deepgram (Nova-3 + diarization) path. Falls back to the pod when no key.
+      if (env.DEEPGRAM_API_KEY) {
+        try {
+          const out = await transcribeWithDeepgram(env.DEEPGRAM_API_KEY, b64ToBytes(body.audio_base64), body.language);
+          return jsonResponse(out, 200, headers);
+        } catch (e: unknown) {
+          return jsonResponse({ error: e instanceof Error ? e.message : "Transcription failed" }, 500, headers);
+        }
       }
 
       const podRes = await fetch(env.POD_URL, {
