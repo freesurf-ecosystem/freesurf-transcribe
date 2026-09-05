@@ -228,7 +228,7 @@ export default {
 
       return jsonResponse(podData, 200, headers);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Internal server error";
+      const msg = e instanceof Error ? e.message : "Internal server error: " + String(e);
       return jsonResponse({ error: msg }, 500, headers);
     }
   },
