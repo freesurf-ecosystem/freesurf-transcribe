@@ -72,7 +72,8 @@
             "useLegacyPackaging": false
           }
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
   }
 }
