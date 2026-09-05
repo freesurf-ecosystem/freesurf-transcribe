@@ -11,4 +11,4 @@ ENVIRONMENT = "production"
 
 # Secrets to set via `wrangler secret put`:
 #   POD_URL   — the consolidated AI pod URL (e.g. https://<pod-id>-8000.proxy.runpod.net)
-#   DEEPGRAM_API_KEY - when set, transcription runs on Deepgram Nova-3 (diarize) instead of the pod
+#   TOGETHER_API_KEY - when set, transcription runs on Together Parakeet-TDT (diarize) instead of the pod

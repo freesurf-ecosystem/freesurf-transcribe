@@ -4,7 +4,7 @@
  */
 export interface Env {
   POD_URL: string;
-  DEEPGRAM_API_KEY?: string;
+  TOGETHER_API_KEY?: string;
 }
 
 function b64ToBytes(b64: string): Uint8Array {
@@ -14,37 +14,65 @@ function b64ToBytes(b64: string): Uint8Array {
   return out;
 }
 
-// Deepgram Nova-3 with diarization → returns the same { segments, text } shape the
-// pod (faster-whisper + pyannote) produced, so mobile is unchanged.
-async function transcribeWithDeepgram(
+function sniffAudioMime(b64: string): string {
+  if (/^UklGR/.test(b64)) return "audio/wav";           // RIFF....WAVE
+  if (/^SUQz|^eXBs|^2bnn|^ADTS/.test(b64)) return "audio/mp4";
+  if (/^fLaC/.test(b64)) return "audio/flac";
+  if (/^OggS/.test(b64)) return "audio/ogg";
+  if (/^GkXf|^1A45DFA3/.test(b64)) return "audio/webm";
+  if (/^\/\*|^SUQz|^ID3|^\u00ff/.test(b64)) return "audio/mpeg"; // mp3 ID3/0xFFFB
+  // M4A/MP4 boxes start with ftyp (size + 'ftyp')
+  if (/^AAAA?GZhdHA|^[A-Za-z0-9]{4}ZnR5cA/.test(b64)) return "audio/mp4";
+  return "audio/mpeg";
+}
+
+// Together Parakeet-TDT with diarization → same { segments, text } shape the pod
+// (faster-whisper + pyannote) produced, so mobile is unchanged.
+async function transcribeWithTogether(
   apiKey: string,
   audio: Uint8Array,
+  mime: string,
   language?: string
 ): Promise<{ segments: any[]; text: string; language: string; duration?: number }> {
-  const qs = new URLSearchParams({ model: "nova-3", diarize: "true", utterances: "true", smart_format: "true" });
-  if (language && language !== "auto") qs.set("language", language);
-  const res = await fetch(`https://api.deepgram.com/v1/listen?${qs.toString()}`, {
+  const fd = new FormData();
+  fd.append("model", "nvidia/parakeet-tdt-0.6b-v3");
+  fd.append("diarize", "true");
+  fd.append("response_format", "verbose_json");
+  if (language && language !== "auto") fd.append("language", language);
+  fd.append("file", new Blob([audio], { type: mime }), "audio");
+
+  const res = await fetch("https://api.together.ai/v1/audio/transcriptions", {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "audio/mp4" },
-    body: audio,
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: fd,
   });
   const data = (await res.json()) as any;
   if (!res.ok) {
-    throw new Error(data?.err_msg || data?.message || `Deepgram error ${res.status}`);
+    throw new Error(data?.error?.message || data?.message || `Together transcription error ${res.status}`);
   }
-  const alt = data?.results?.channels?.[0]?.alternatives?.[0] || {};
-  const utterances = (data?.results?.utterances || []).map((u: any, i: number) => ({
-    speaker: u.speaker ?? i,
-    start: u.start,
-    end: u.end,
-    text: u.transcript,
+  const text = String(data?.text || "").trim();
+  let segments: any[] = (data?.speaker_segments || []).map((s: any, i: number) => ({
+    speaker: s.speaker_id ?? i,
+    start: s.start ?? 0,
+    end: s.end ?? 0,
+    text: s.text ?? "",
   }));
-  const segments = utterances.length ? utterances : [{ speaker: 0, start: 0, end: alt.duration || 0, text: alt.transcript }];
+  if (!segments.length && Array.isArray(data?.segments)) {
+    segments = (data.segments as any[]).map((s, i) => ({
+      speaker: 0,
+      start: s.start ?? 0,
+      end: s.end ?? 0,
+      text: s.text ?? "",
+    }));
+  }
+  if (!segments.length && text) {
+    segments = [{ speaker: 0, start: 0, end: data?.duration || 0, text }];
+  }
   return {
     segments,
-    text: (alt.transcript || segments.map((s: any) => s.text).join(" ")).trim(),
-    language: (data?.metadata?.language || language || "en"),
-    duration: alt.duration,
+    text: text || segments.map((s: any) => s.text).join(" ").trim(),
+    language: data?.language || language || "en",
+    duration: data?.duration,
   };
 }
 
@@ -151,7 +179,7 @@ export default {
       return jsonResponse({ error: "Not found" }, 404, headers);
     }
 
-    if (!env.POD_URL && !env.DEEPGRAM_API_KEY) {
+    if (!env.POD_URL && !env.TOGETHER_API_KEY) {
       return jsonResponse({ error: "Transcription not configured" }, 500, headers);
     }
 
@@ -161,10 +189,15 @@ export default {
         return jsonResponse({ error: "No audio data provided" }, 400, headers);
       }
 
-      // Hosted Deepgram (Nova-3 + diarization) path. Falls back to the pod when no key.
-      if (env.DEEPGRAM_API_KEY) {
+      // Hosted Together Parakeet-TDT (diarize) path. Falls back to the pod when no key.
+      if (env.TOGETHER_API_KEY) {
         try {
-          const out = await transcribeWithDeepgram(env.DEEPGRAM_API_KEY, b64ToBytes(body.audio_base64), body.language);
+          const out = await transcribeWithTogether(
+            env.TOGETHER_API_KEY,
+            b64ToBytes(body.audio_base64),
+            sniffAudioMime(body.audio_base64),
+            body.language
+          );
           return jsonResponse(out, 200, headers);
         } catch (e: unknown) {
           return jsonResponse({ error: e instanceof Error ? e.message : "Transcription failed" }, 500, headers);
