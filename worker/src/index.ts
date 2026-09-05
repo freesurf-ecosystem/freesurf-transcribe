@@ -5,6 +5,46 @@
 export interface Env {
   POD_URL: string;
   TOGETHER_API_KEY?: string;
+  SUPABASE_URL?: string;
+  SUPABASE_ANON_KEY?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+  TRANSCRIBER_WEEKLY_SECONDS?: string;
+}
+
+const TRANSCRIBE_METRIC = "transcribe_seconds";
+const DEFAULT_WEEKLY_SECONDS = 3600; // 1 hour/week
+
+function srHeaders(env: Env): Record<string, string> {
+  return { apikey: env.SUPABASE_SERVICE_ROLE_KEY || "", Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY || ""}` };
+}
+function weekStartIso(now: Date): string {
+  const day = (now.getUTCDay() + 6) % 7;
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - day)).toISOString().slice(0, 10);
+}
+async function authedUserId(env: Env, authHeader: string): Promise<string | null> {
+  if (!authHeader.startsWith("Bearer ") || !env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return null;
+  try {
+    const res = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, { headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: authHeader } });
+    if (!res.ok) return null;
+    return ((await res.json()) as { id?: string })?.id || null;
+  } catch { return null; }
+}
+async function readUsage(env: Env, userId: string, metric: string, week: string): Promise<number> {
+  try {
+    const q = new URLSearchParams({ user_id: `eq.${userId}`, metric: `eq.${metric}`, week_start: `eq.${week}`, select: "count" });
+    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/usage?${q.toString()}`, { headers: srHeaders(env) });
+    if (!res.ok) return 0;
+    return Number(((await res.json()) as any[])?.[0]?.count) || 0;
+  } catch { return 0; }
+}
+async function incrementUsage(env: Env, userId: string, metric: string, week: string, delta: number): Promise<number> {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/meter_usage`, {
+    method: "POST", headers: { ...srHeaders(env), "Content-Type": "application/json" },
+    body: JSON.stringify({ p_user_id: userId, p_metric: metric, p_week: week, p_delta: delta }),
+  });
+  if (!res.ok) return 0;
+  const n = Number(await res.text());
+  return Number.isFinite(n) ? n : 0;
 }
 
 function b64ToBytes(b64: string): Uint8Array {
@@ -89,8 +129,8 @@ function corsHeaders(origin: string): Record<string, string> {
   );
   return {
     "Access-Control-Allow-Origin": allowed ? origin : "",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
 }
 
@@ -168,6 +208,18 @@ export default {
 </urlset>`;
         return new Response(xml, { status: 200, headers: { "Content-Type": "application/xml" } });
       }
+      // Usage meter — how much of the weekly allowance is left.
+      if (url.pathname === "/api/usage") {
+        if (!env.SUPABASE_SERVICE_ROLE_KEY || !env.SUPABASE_URL) {
+          return jsonResponse({ error: "Usage metering not configured" }, 500, headers);
+        }
+        const userId = await authedUserId(env, request.headers.get("Authorization") || "");
+        if (!userId) return jsonResponse({ error: "Unauthorized" }, 401, headers);
+        const week = weekStartIso(new Date());
+        const limit = Math.max(0, Number(env.TRANSCRIBER_WEEKLY_SECONDS) || DEFAULT_WEEKLY_SECONDS);
+        const used = await readUsage(env, userId, TRANSCRIBE_METRIC, week);
+        return jsonResponse({ usage: { metric: TRANSCRIBE_METRIC, used, limit, reset: week } }, 200, headers);
+      }
       return htmlResponse(LANDING_HTML, headers);
     }
 
@@ -189,6 +241,26 @@ export default {
         return jsonResponse({ error: "No audio data provided" }, 400, headers);
       }
 
+      // Weekly free-allowance gate (only active when Supabase metering is configured).
+      // Duration is only known after transcription, so we pre-block when the cap is
+      // already reached, then add this clip's seconds after a successful run.
+      let meter: { userId: string; week: string; limit: number } | null = null;
+      if (env.SUPABASE_SERVICE_ROLE_KEY && env.SUPABASE_URL) {
+        const userId = await authedUserId(env, request.headers.get("Authorization") || "");
+        if (!userId) return jsonResponse({ error: "Please sign in to use the transcriber." }, 401, headers);
+        const week = weekStartIso(new Date());
+        const limit = Math.max(0, Number(env.TRANSCRIBER_WEEKLY_SECONDS) || DEFAULT_WEEKLY_SECONDS);
+        const used = await readUsage(env, userId, TRANSCRIBE_METRIC, week);
+        if (used >= limit) {
+          return jsonResponse(
+            { error: "Weekly limit reached — upgrade or try again next week.", usage: { metric: TRANSCRIBE_METRIC, used, limit, reset: week } },
+            429,
+            headers
+          );
+        }
+        meter = { userId, week, limit };
+      }
+
       // Hosted Together Parakeet-TDT (diarize) path. Falls back to the pod when no key.
       if (env.TOGETHER_API_KEY) {
         try {
@@ -198,6 +270,7 @@ export default {
             sniffAudioMime(body.audio_base64),
             body.language
           );
+          if (meter) await incrementUsage(env, meter.userId, TRANSCRIBE_METRIC, meter.week, Math.max(1, Math.ceil(out.duration || 0)));
           return jsonResponse(out, 200, headers);
         } catch (e: unknown) {
           return jsonResponse({ error: e instanceof Error ? e.message : "Transcription failed" }, 500, headers);
@@ -226,6 +299,7 @@ export default {
         return jsonResponse({ error: podData.error || "Transcription failed" }, podRes.status || 500, headers);
       }
 
+      if (meter) await incrementUsage(env, meter.userId, TRANSCRIBE_METRIC, meter.week, Math.max(1, Math.ceil(podData.duration || 0)));
       return jsonResponse(podData, 200, headers);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Internal server error: " + String(e);
