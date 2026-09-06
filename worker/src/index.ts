@@ -7,7 +7,7 @@ export interface Env {
   TOGETHER_API_KEY?: string;
   SUPABASE_URL?: string;
   SUPABASE_ANON_KEY?: string;
-  SUPABASE_SERVICE_ROLE_KEY?: string;
+  SUPABASE_SECRET_KEY?: string;
   USAGE_METERING?: string;
   TRANSCRIBER_WEEKLY_SECONDS?: string;
 }
@@ -16,7 +16,7 @@ const TRANSCRIBE_METRIC = "transcribe_seconds";
 const DEFAULT_WEEKLY_SECONDS = 3600; // 1 hour/week
 
 function srHeaders(env: Env): Record<string, string> {
-  return { apikey: env.SUPABASE_SERVICE_ROLE_KEY || "", Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY || ""}` };
+  return { apikey: env.SUPABASE_SECRET_KEY || "", Authorization: `Bearer ${env.SUPABASE_SECRET_KEY || ""}` };
 }
 function weekStartIso(now: Date): string {
   const day = (now.getUTCDay() + 6) % 7;
@@ -211,7 +211,7 @@ export default {
       }
       // Usage meter — how much of the weekly allowance is left.
       if (url.pathname === "/api/usage") {
-        if (env.USAGE_METERING !== "on" || !env.SUPABASE_SERVICE_ROLE_KEY || !env.SUPABASE_URL) {
+        if (env.USAGE_METERING !== "on" || !env.SUPABASE_SECRET_KEY || !env.SUPABASE_URL) {
           return jsonResponse({ error: "Usage metering not configured" }, 500, headers);
         }
         const userId = await authedUserId(env, request.headers.get("Authorization") || "");
@@ -246,7 +246,7 @@ export default {
       // Duration is only known after transcription, so we pre-block when the cap is
       // already reached, then add this clip's seconds after a successful run.
       let meter: { userId: string; week: string; limit: number } | null = null;
-      if (env.USAGE_METERING === "on" && env.SUPABASE_SERVICE_ROLE_KEY && env.SUPABASE_URL) {
+      if (env.USAGE_METERING === "on" && env.SUPABASE_SECRET_KEY && env.SUPABASE_URL) {
         const userId = await authedUserId(env, request.headers.get("Authorization") || "");
         if (!userId) return jsonResponse({ error: "Please sign in to use the transcriber." }, 401, headers);
         const week = weekStartIso(new Date());
