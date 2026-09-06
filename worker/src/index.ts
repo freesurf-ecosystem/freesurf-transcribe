@@ -120,7 +120,7 @@ const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://localhost:3000",
   "http://localhost:8081",
-  "https://Free Surf.tools",
+  "https://freesurf.tools",
 ];
 
 function corsHeaders(origin: string): Record<string, string> {
@@ -172,7 +172,7 @@ const LANDING_HTML = `<!doctype html>
 </head>
 <body>
 <div class="wrap">
-  <a class="logo" href="https://Free Surf.tools">Free Surf</a>
+  <a class="logo" href="https://freesurf.tools">Free Surf</a>
   <h1>Meeting Transcriber</h1>
   <p class="lede">Turn recordings and meetings into clean, searchable transcripts — with speaker labels, so you always know who said what.</p>
   <div class="phone">Phone screenshots coming soon</div>
@@ -204,7 +204,7 @@ export default {
       if (url.pathname === "/sitemap.xml") {
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://transcribe.Free Surf.tools/</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://transcribe.freesurf.tools/</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
 </urlset>`;
         return new Response(xml, { status: 200, headers: { "Content-Type": "application/xml" } });
       }
