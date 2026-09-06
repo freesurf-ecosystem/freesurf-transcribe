@@ -1,5 +1,5 @@
 /**
- * FreeSurf Transcriber — Cloudflare Worker
+ * Free Surf Transcriber — Cloudflare Worker
  * Proxies audio → RunPod (faster-whisper + pyannote diarization).
  */
 export interface Env {
@@ -120,7 +120,7 @@ const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://localhost:3000",
   "http://localhost:8081",
-  "https://freesurf.tools",
+  "https://Free Surf.tools",
 ];
 
 function corsHeaders(origin: string): Record<string, string> {
@@ -150,7 +150,7 @@ const LANDING_HTML = `<!doctype html>
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Meeting Transcriber · FreeSurf</title>
+<title>Meeting Transcriber · Free Surf</title>
 <meta name="description" content="Turn audio recordings and meetings into clean, searchable transcripts with speaker labels."/>
 <style>
   :root { color-scheme: light dark; --bg:#ffffff; --text:#1d1b18; --muted:#8a8178; --brand:#1d1b18; --border:#e6e4df; }
@@ -172,16 +172,16 @@ const LANDING_HTML = `<!doctype html>
 </head>
 <body>
 <div class="wrap">
-  <a class="logo" href="https://freesurf.tools">FreeSurf</a>
+  <a class="logo" href="https://Free Surf.tools">Free Surf</a>
   <h1>Meeting Transcriber</h1>
   <p class="lede">Turn recordings and meetings into clean, searchable transcripts — with speaker labels, so you always know who said what.</p>
   <div class="phone">Phone screenshots coming soon</div>
   <div class="stores">
-    <a class="store play" href="https://play.google.com/store/apps/details?id=tools.freesurf.transcriber" target="_blank" rel="noopener">Get it on Google Play</a>
+    <a class="store play" href="https://play.google.com/store/apps/details?id=tools.Free Surf.transcriber" target="_blank" rel="noopener">Get it on Google Play</a>
     <span class="store soon">App Store · Upcoming</span>
   </div>
   <footer>
-    <span>&copy; <span id="year"></span> FreeSurf · Free tools, no bullshit.</span>
+    <span>&copy; <span id="year"></span> Free Surf · Free tools, no bullshit.</span>
     <a href="https://feedfree.tech" target="_blank" rel="noopener">Feedfree Digest</a>
   </footer>
 </div>
@@ -204,7 +204,7 @@ export default {
       if (url.pathname === "/sitemap.xml") {
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://transcribe.freesurf.tools/</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://transcribe.Free Surf.tools/</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
 </urlset>`;
         return new Response(xml, { status: 200, headers: { "Content-Type": "application/xml" } });
       }
