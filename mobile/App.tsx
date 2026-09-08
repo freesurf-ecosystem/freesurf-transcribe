@@ -9,6 +9,8 @@ import { supabase } from "./lib/supabase";
 import TranscriberScreen from "./screens/TranscriberScreen";
 import AuthScreen from "./screens/AuthScreen";
 import AboutScreen from "./screens/AboutScreen";
+import LanguageChooser from "./screens/LanguageChooser";
+import { useAppLanguage } from "./i18n";
 
 const darkTheme = {
   ...MD3DarkTheme,
@@ -57,6 +59,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function App() {
   const [session, setSession] = useState<boolean | null>(null);
   const [isDark, setIsDark] = useState(true);
+  const { loaded: langLoaded, chosen: langChosen, setLanguage } = useAppLanguage();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(Boolean(data.session)));
@@ -91,8 +94,17 @@ export default function App() {
     return () => subscription.remove();
   }, []);
 
-  if (session === null) {
+  if (session === null || !langLoaded) {
     return <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0b1020" }}><ActivityIndicator color="#5b8cff" /></View>;
+  }
+
+  if (!langChosen) {
+    return (
+      <PaperProvider theme={isDark ? darkTheme : lightTheme}>
+        <StatusBar style="light" />
+        <LanguageChooser onSelect={setLanguage} />
+      </PaperProvider>
+    );
   }
 
   return (

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { WORKER_URL } from "../lib/config";
 import { getDeviceId } from "../lib/device";
+import { translations, useAppLanguage } from "../i18n";
 
 type Props = { colors: { dim: string; text: string } };
 
@@ -10,6 +11,8 @@ type Props = { colors: { dim: string; text: string } };
  * so it's safe to show always in the menu footer.
  */
 export default function UsageMeter({ colors }: Props) {
+  const { lang } = useAppLanguage();
+  const T = translations[lang];
   const [state, setState] = useState<"loading" | "ok" | "off">("loading");
   const [usedSec, setUsedSec] = useState(0);
   const [limitSec, setLimitSec] = useState(0);
@@ -45,9 +48,9 @@ export default function UsageMeter({ colors }: Props) {
 
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.label, { color: colors.text }]}>Free minutes</Text>
+      <Text style={[styles.label, { color: colors.text }]}>{T.freeMinutes}</Text>
       <Text style={[styles.value, { color: colors.dim }]}>
-        {usedMin} / {limitMin} this month
+        {usedMin} / {limitMin} {T.thisMonth}
       </Text>
     </View>
   );

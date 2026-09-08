@@ -16,6 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FloatingHamburger from "../components/FloatingHamburger";
 import UsageMeter from "../components/UsageMeter";
+import { translations, useAppLanguage } from "../i18n";
 
 import { WORKER_URL } from "../lib/config";
 import { getDeviceId } from "../lib/device";
@@ -48,6 +49,8 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
   const [editingTitle, setEditingTitle] = useState("");
 
   const recordingRef = useRef<Audio.Recording | null>(null);
+  const { lang } = useAppLanguage();
+  const T = translations[lang];
 
   useEffect(() => { loadHistory(); }, []);
   async function loadHistory() {
@@ -128,7 +131,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       // Save to history
       const entry: HistoryEntry = {
         id: Date.now().toString(),
-        title: "Untitled transcript",
+        title: T.untitled,
         text: plainText,
         segments: data.segments || [],
         audioUri: savedAudioUri,
@@ -263,7 +266,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
   }
   function formatSpeaker(speaker: string): string {
     const idx = speakerIndex(speaker);
-    return `Speaker ${idx + 1}`;
+    return `${T.speaker} ${idx + 1}`;
   }
   // Rebuild a readable transcript grouped by speaker (keeps diarization structure for share/export).
   function formatBySpeaker(segments?: Segment[]): string {
@@ -310,9 +313,9 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         colors={hbColors}
         footer={themeToggleFooter}
         menuItems={[
-          { label: "Support", onPress: () => Linking.openURL("https://freesurf.tools/support") },
-          { label: "Privacy", onPress: () => Linking.openURL("https://freesurf.tools/privacy") },
-          { label: "Terms", onPress: () => Linking.openURL("https://freesurf.tools/terms") },
+          { label: T.support, onPress: () => Linking.openURL("https://freesurf.tools/support") },
+          { label: T.privacy, onPress: () => Linking.openURL("https://freesurf.tools/privacy") },
+          { label: T.terms, onPress: () => Linking.openURL("https://freesurf.tools/terms") },
         ]}
       />
 
@@ -321,7 +324,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
           <>
             <Card mode="contained">
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingLeft: 16, paddingRight: 4, paddingTop: 8, paddingBottom: 4 }}>
-                <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>Untitled transcript</Text>
+                <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>{T.untitled}</Text>
                 <View style={{ width: 36 }} />
               </View>
                 {result.segments && result.segments.length > 0 ? (
@@ -343,7 +346,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                   );
                 })
               ) : (
-                <Text variant="bodyLarge" style={{ lineHeight: 24, paddingHorizontal: 16 }}>{result.text || "No text returned"}</Text>
+                <Text variant="bodyLarge" style={{ lineHeight: 24, paddingHorizontal: 16 }}>{result.text || T.noText}</Text>
               )}
               {resultMenuOpen && (
                 <View style={{ borderTopWidth: 0.5, borderTopColor: theme.colors.outline, flexDirection: "row", justifyContent: "space-around", paddingVertical: 4 }}>
@@ -414,7 +417,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                         );
                       })}
                       {!isExpanded && entry.segments.length > 2 && (
-                        <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center", paddingTop: 4 }}>Tap to expand...</Text>
+                        <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center", paddingTop: 4 }}>{T.tapToExpand}</Text>
                       )}
                     </TouchableOpacity>
                   )}
@@ -424,7 +427,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                         {isExpanded ? entry.text : entry.text.slice(0, 120) + (entry.text.length > 120 ? "..." : "")}
                       </Text>
                       {!isExpanded && entry.text.length > 120 && (
-                        <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center", paddingTop: 4 }}>Tap to expand...</Text>
+                        <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center", paddingTop: 4 }}>{T.tapToExpand}</Text>
                       )}
                     </TouchableOpacity>
                   )}
@@ -444,7 +447,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
           </>
         ) : (
           <Text variant="bodyLarge" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center", paddingVertical: 80 }}>
-            Tap record to start transcribing, or import an audio file.
+            {T.emptyState}
           </Text>
         )}
       </ScrollView>
@@ -456,7 +459,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         {isProcessing ? (
           <View style={{ flex: 2, flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: theme.colors.surfaceVariant, borderRadius: 100, gap: 8 }}>
             <ActivityIndicator size="small" color={theme.colors.primary} />
-            <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>Transcribing...</Text>
+            <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>{T.transcribing}</Text>
           </View>
         ) : (
           <Button
@@ -466,7 +469,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
             onPress={isRecording ? stopRecording : startRecording}
             icon={() => isRecording ? <Square size={16} color="#fff" /> : <Mic size={16} color="#fff" />}
           >
-            {isRecording ? "Stop" : "Record"}
+            {isRecording ? T.stop : T.record}
           </Button>
         )}
       </Surface>
