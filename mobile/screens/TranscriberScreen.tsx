@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   View, ScrollView, Alert, Share, Linking,
-  ActivityIndicator, Switch, TextInput, TouchableOpacity,
+  ActivityIndicator, TextInput, TouchableOpacity, Pressable,
 } from "react-native";
 import {
   Text, Card, Button, Surface, useTheme, IconButton, Divider,
 } from "react-native-paper";
 import { Mic, Square, FolderOpen, Share2, Trash2, EllipsisVertical, Pencil, AudioLines, Play, Pause } from "lucide-react-native";
+import Slider from "@react-native-community/slider";
 import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system/legacy";
 import * as DocumentPicker from "expo-document-picker";
@@ -14,8 +15,10 @@ import * as Sharing from "expo-sharing";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FloatingHamburger from "../components/FloatingHamburger";
+import UsageMeter from "../components/UsageMeter";
 
 import { WORKER_URL } from "../lib/config";
+import { getDeviceId } from "../lib/device";
 const HISTORY_KEY = "freesurf-transcriber-history";
 const SPEAKER_COLORS = ["#5b8cff", "#78e6c4", "#f0a060", "#c084fc", "#60c0f0"];
 
@@ -38,6 +41,9 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const audioSoundRef = useRef<Audio.Sound | null>(null);
+  const isSeekingRef = useRef(false);
+  const [audioPos, setAudioPos] = useState(0);   // ms
+  const [audioDur, setAudioDur] = useState(0);   // ms (0 until loaded)
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
 
@@ -85,12 +91,17 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       if (uri) transcribeAudio(uri, uri);
     } catch { Alert.alert("Error", "Could not stop recording."); }
   }
-  async function transcribeAudio(audioUri: string, originalUri?: string) {
+  async function transcribeAudio(audioUri: string, originalUri?: string, isImport?: boolean) {
     setIsProcessing(true);
     setResult(null);
     try {
       const base64 = await FileSystem.readAsStringAsync(audioUri, { encoding: FileSystem.EncodingType.Base64 });
-      const res = await fetch(`${WORKER_URL}/api/transcribe`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ audio_base64: base64 }) });
+      const deviceId = await getDeviceId();
+      const res = await fetch(`${WORKER_URL}/api/transcribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Device-Id": deviceId },
+        body: JSON.stringify({ audio_base64: base64 }),
+      });
       const data = await res.json();
       console.log("[Transcriber] Response:", JSON.stringify(data).slice(0, 200));
       if (data.error) throw new Error(data.error);
@@ -125,9 +136,16 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       };
       const updated = [entry, ...history].slice(0, 50);
       await saveHistory(updated);
+      setExpandedId(entry.id); // show the full transcript immediately (not the collapsed preview)
       setResult(null);
     } catch (e: any) {
-      Alert.alert("Error", e.message || "Transcription failed.");
+      const msg = e?.message || "Transcription failed.";
+      Alert.alert(
+        "Error",
+        isImport
+          ? `${msg}\n\nSupported audio files: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.`
+          : msg
+      );
     }
     finally { setIsProcessing(false); }
   }
@@ -135,7 +153,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
     try {
       const r = await DocumentPicker.getDocumentAsync({ type: ["audio/*"], copyToCacheDirectory: true });
       if (r.canceled || !r.assets?.[0]) return;
-      transcribeAudio(r.assets[0].uri, r.assets[0].uri);
+      transcribeAudio(r.assets[0].uri, r.assets[0].uri, true);
     } catch { Alert.alert("Error", "Could not import file."); }
   }
   async function playAudio(entry: HistoryEntry) {
@@ -152,20 +170,58 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       return;
     }
     try {
-      const { sound } = await Audio.Sound.createAsync({ uri: entry.audioUri }, { shouldPlay: true }, (status) => {
+      const { sound } = await Audio.Sound.createAsync({ uri: entry.audioUri }, { shouldPlay: true }, (status: any) => {
+        if (!status) return;
+        if (status.durationMillis && status.durationMillis > 0) setAudioDur(status.durationMillis);
+        if (!isSeekingRef.current && typeof status.positionMillis === "number") setAudioPos(status.positionMillis);
         if (status.isLoaded && status.didJustFinish) {
           setIsPlayingAudio(false);
           setPlayingAudioId(null);
+          setAudioPos(0);
         }
       });
       audioSoundRef.current = sound;
       setPlayingAudioId(entry.id);
+      setAudioDur(0);
+      setAudioPos(0);
       setIsPlayingAudio(true);
     } catch { Alert.alert("Error", "Could not play audio."); }
   }
+  async function seekAudio(ms: number) {
+    try { await audioSoundRef.current?.setPositionAsync(ms); } catch {}
+    setAudioPos(ms);
+  }
+  // Seek bar shown only for the entry whose audio is currently loaded, so you can jump anywhere / to the end.
+  function renderScrub(entry: HistoryEntry) {
+    if (!entry.audioUri || playingAudioId !== entry.id) return null;
+    const maxMs = Math.max(audioDur, 1000);
+    return (
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 4 }}>
+        <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12, fontVariant: ["tabular-nums"] }}>
+          {formatTime(Math.floor(audioPos / 1000))}
+        </Text>
+        <Slider
+          style={{ flex: 1, height: 32 }}
+          minimumValue={0}
+          maximumValue={maxMs}
+          value={audioPos}
+          minimumTrackTintColor={theme.colors.primary}
+          maximumTrackTintColor={theme.colors.outline}
+          thumbTintColor={theme.colors.primary}
+          disabled={audioDur <= 0}
+          onSlidingStart={() => { isSeekingRef.current = true; }}
+          onValueChange={(v) => { if (isSeekingRef.current) setAudioPos(v); }}
+          onSlidingComplete={(v) => { isSeekingRef.current = false; seekAudio(v); }}
+        />
+        <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12, fontVariant: ["tabular-nums"] }}>
+          {formatTime(Math.floor(audioDur / 1000))}
+        </Text>
+      </View>
+    );
+  }
 
   async function handleShare(item: { text?: string; segments?: Segment[] }) {
-    const txt = item.text || item.segments?.map((s) => s.text).join(" ") || "";
+    const txt = item.segments?.length ? formatBySpeaker(item.segments) : item.text || "";
     if (txt) await Share.share({ message: txt });
   }
   async function handleShareAudio(entry: HistoryEntry) {
@@ -209,12 +265,22 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
     const idx = speakerIndex(speaker);
     return `Speaker ${idx + 1}`;
   }
-
-  const themeToggleFooter = onToggleTheme ? (
-    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
-      <Switch value={!isDark} onValueChange={onToggleTheme} trackColor={{ true: isDark ? "#ffffff" : "#111827", false: "#555" }} />
-    </View>
-  ) : undefined;
+  // Rebuild a readable transcript grouped by speaker (keeps diarization structure for share/export).
+  function formatBySpeaker(segments?: Segment[]): string {
+    if (!segments?.length) return "";
+    let out = "";
+    let lastSpeaker = "";
+    for (const seg of segments) {
+      const label = formatSpeaker(seg.speaker);
+      if (label !== lastSpeaker) {
+        if (out) out += "\n\n";
+        out += label;
+        lastSpeaker = label;
+      }
+      out += ` ${seg.text}`;
+    }
+    return out.trim();
+  }
 
   const hbColors = {
     text: theme.colors.onSurface,
@@ -223,6 +289,20 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
     border: theme.colors.outline,
   };
 
+  const themeToggleFooter = onToggleTheme ? (
+    <View style={{ flexDirection: "column", gap: 10 }}>
+      <Pressable
+        onPress={onToggleTheme}
+        accessibilityLabel="Toggle dark mode"
+        hitSlop={8}
+        style={{ alignSelf: "center", padding: 6 }}
+      >
+        <Text style={{ fontSize: 20, color: hbColors.text }}>◐</Text>
+      </Pressable>
+      <UsageMeter colors={hbColors} />
+    </View>
+  ) : undefined;
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <FloatingHamburger
@@ -230,7 +310,6 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         colors={hbColors}
         footer={themeToggleFooter}
         menuItems={[
-          { label: "About Us", onPress: () => navigation?.navigate("About") },
           { label: "Support", onPress: () => Linking.openURL("https://freesurf.tools/support") },
           { label: "Privacy", onPress: () => Linking.openURL("https://freesurf.tools/privacy") },
           { label: "Terms", onPress: () => Linking.openURL("https://freesurf.tools/terms") },
@@ -280,7 +359,6 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         ) : history.length > 0 ? (
           <>
             {history.map((entry) => {
-              const isMenuOpen = openMenuId === entry.id;
               const isEditing = editingId === entry.id;
               const isExpanded = expandedId === entry.id;
               return (
@@ -309,12 +387,12 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                               size={20} onPress={() => playAudio(entry)} style={{ margin: 0 }}
                             />
                           )}
-                          <IconButton icon={() => <EllipsisVertical size={18} color={theme.colors.onSurface} />} onPress={() => setOpenMenuId(isMenuOpen ? null : entry.id)} />
                         </View>
                       </View>
                     </View>
                   </TouchableOpacity>
 
+                  {renderScrub(entry)}
                   {entry.segments && entry.segments.length > 0 && (
 <TouchableOpacity activeOpacity={0.7} onPress={() => setExpandedId(isExpanded ? null : entry.id)} style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
                       {entry.segments.slice(0, isExpanded ? entry.segments.length : 2).map((seg: Segment, i: number) => {
@@ -351,16 +429,15 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                     </TouchableOpacity>
                   )}
 
-                  {isMenuOpen && (
-                    <View style={{ borderTopWidth: 0.5, borderTopColor: theme.colors.outline, flexDirection: "row", justifyContent: "space-around", paddingVertical: 4 }}>
-                      <IconButton icon={() => <Share2 size={18} color={theme.colors.onSurface} />} onPress={() => handleShare(entry)} />
-                      {entry.audioUri && (
-                        <IconButton icon={() => <AudioLines size={18} color={theme.colors.onSurface} />} onPress={() => handleShareAudio(entry)} />
-                      )}
-                      <IconButton icon={() => <Pencil size={18} color={theme.colors.onSurface} />} onPress={() => startRename(entry)} />
-                      <IconButton icon={() => <Trash2 size={18} color={theme.colors.error} />} onPress={() => deleteEntry(entry.id)} />
-                    </View>
-                  )}
+                  {/* Always-visible card actions (no overflow "..." menu) */}
+                  <View style={{ borderTopWidth: 0.5, borderTopColor: theme.colors.outline, flexDirection: "row", justifyContent: "space-around", paddingVertical: 4 }}>
+                    <IconButton icon={() => <Share2 size={18} color={theme.colors.onSurface} />} onPress={() => handleShare(entry)} />
+                    {entry.audioUri && (
+                      <IconButton icon={() => <AudioLines size={18} color={theme.colors.onSurface} />} onPress={() => handleShareAudio(entry)} />
+                    )}
+                    <IconButton icon={() => <Pencil size={18} color={theme.colors.onSurface} />} onPress={() => startRename(entry)} />
+                    <IconButton icon={() => <Trash2 size={18} color={theme.colors.error} />} onPress={() => deleteEntry(entry.id)} />
+                  </View>
                 </Card>
               );
             })}

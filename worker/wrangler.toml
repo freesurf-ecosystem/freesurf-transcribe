@@ -8,7 +8,15 @@ routes = [
 
 [vars]
 ENVIRONMENT = "production"
+SUPABASE_URL = "https://jstojewashwoswsskwjk.supabase.co"
+TOGETHER_ASR_MODEL = "openai/whisper-large-v3"
+TRANSCRIBER_MONTHLY_SECONDS = "300"
+USAGE_METERING = "on"
+# ASR model override (default nvidia/parakeet-tdt-0.6b-v3). Try openai/whisper-large-v3 for multilingual.
+# Set via `wrangler secret put TOGETHER_ASR_MODEL` or as a var.
 
 # Secrets to set via `wrangler secret put`:
-#   POD_URL   — the consolidated AI pod URL (e.g. https://<pod-id>-8000.proxy.runpod.net)
-#   TOGETHER_API_KEY - when set, transcription runs on Together Parakeet-TDT (diarize) instead of the pod
+#   TOGETHER_API_KEY            - when set, transcription runs on Together (diarize) instead of the pod
+#   POD_URL                     - fallback RunPod pod URL (only used if TOGETHER_API_KEY is unset)
+#   SUPABASE_SECRET_KEY         - server-side key for reading/writing the usage table
+#   USAGE_METERING              - "on" enables the anonymous monthly meter (also a var above)

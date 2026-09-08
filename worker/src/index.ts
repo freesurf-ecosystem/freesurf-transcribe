@@ -1,26 +1,27 @@
 /**
- * Free Surf Transcriber — Cloudflare Worker
+ * FreeSurf Transcriber — Cloudflare Worker
  * Proxies audio → RunPod (faster-whisper + pyannote diarization).
  */
 export interface Env {
   POD_URL: string;
   TOGETHER_API_KEY?: string;
+  TOGETHER_ASR_MODEL?: string; // override ASR model (default: nvidia/parakeet-tdt-0.6b-v3); try openai/whisper-large-v3 for multilingual
   SUPABASE_URL?: string;
   SUPABASE_ANON_KEY?: string;
   SUPABASE_SECRET_KEY?: string;
   USAGE_METERING?: string;
-  TRANSCRIBER_WEEKLY_SECONDS?: string;
+  TRANSCRIBER_MONTHLY_SECONDS?: string; // free allowance per month (default 7200 = 2h); set 60 to test the gate
 }
 
 const TRANSCRIBE_METRIC = "transcribe_seconds";
-const DEFAULT_WEEKLY_SECONDS = 3600; // 1 hour/week
+const DEFAULT_MONTHLY_SECONDS = 7200; // 2 hours / month
+const DEFAULT_ASR_MODEL = "nvidia/parakeet-tdt-0.6b-v3";
 
 function srHeaders(env: Env): Record<string, string> {
   return { apikey: env.SUPABASE_SECRET_KEY || "", Authorization: `Bearer ${env.SUPABASE_SECRET_KEY || ""}` };
 }
-function weekStartIso(now: Date): string {
-  const day = (now.getUTCDay() + 6) % 7;
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - day)).toISOString().slice(0, 10);
+function monthStartIso(now: Date): string {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 10);
 }
 async function authedUserId(env: Env, authHeader: string): Promise<string | null> {
   if (!authHeader.startsWith("Bearer ") || !env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return null;
@@ -30,18 +31,27 @@ async function authedUserId(env: Env, authHeader: string): Promise<string | null
     return ((await res.json()) as { id?: string })?.id || null;
   } catch { return null; }
 }
-async function readUsage(env: Env, userId: string, metric: string, week: string): Promise<number> {
+
+// Anonymous-first identity: if the user is signed in we use their account id; otherwise we fall back to
+// the device id the client sends (X-Device-Id), namespaced so it can never collide with an account id.
+async function resolveUserId(env: Env, request: Request): Promise<string | null> {
+  const authed = await authedUserId(env, request.headers.get("Authorization") || "");
+  if (authed) return authed;
+  const deviceId = request.headers.get("X-Device-Id")?.trim();
+  return deviceId ? `anon:${deviceId}` : null;
+}
+async function readUsage(env: Env, userId: string, metric: string, period: string): Promise<number> {
   try {
-    const q = new URLSearchParams({ user_id: `eq.${userId}`, metric: `eq.${metric}`, week_start: `eq.${week}`, select: "count" });
+    const q = new URLSearchParams({ user_id: `eq.${userId}`, metric: `eq.${metric}`, period_start: `eq.${period}`, select: "count" });
     const res = await fetch(`${env.SUPABASE_URL}/rest/v1/usage?${q.toString()}`, { headers: srHeaders(env) });
     if (!res.ok) return 0;
     return Number(((await res.json()) as any[])?.[0]?.count) || 0;
   } catch { return 0; }
 }
-async function incrementUsage(env: Env, userId: string, metric: string, week: string, delta: number): Promise<number> {
+async function incrementUsage(env: Env, userId: string, metric: string, period: string, delta: number): Promise<number> {
   const res = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/meter_usage`, {
     method: "POST", headers: { ...srHeaders(env), "Content-Type": "application/json" },
-    body: JSON.stringify({ p_user_id: userId, p_metric: metric, p_week: week, p_delta: delta }),
+    body: JSON.stringify({ p_user_id: userId, p_metric: metric, p_period: period, p_delta: delta }),
   });
   if (!res.ok) return 0;
   const n = Number(await res.text());
@@ -71,15 +81,18 @@ function sniffAudioMime(b64: string): string {
 // (faster-whisper + pyannote) produced, so mobile is unchanged.
 async function transcribeWithTogether(
   apiKey: string,
+  model: string,
   audio: Uint8Array,
   mime: string,
   language?: string
 ): Promise<{ segments: any[]; text: string; language: string; duration?: number }> {
   const fd = new FormData();
-  fd.append("model", "nvidia/parakeet-tdt-0.6b-v3");
+  fd.append("model", model);
   fd.append("diarize", "true");
   fd.append("response_format", "verbose_json");
-  if (language && language !== "auto") fd.append("language", language);
+  // Together defaults `language` to "en" (which translates other languages). "auto" transcribes in the
+  // spoken language so Whisper can auto-detect without forcing English.
+  fd.append("language", language && language !== "auto" ? language : "auto");
   fd.append("file", new Blob([audio], { type: mime }), "audio");
 
   const res = await fetch("https://api.together.ai/v1/audio/transcriptions", {
@@ -151,7 +164,7 @@ const LANDING_HTML = `<!doctype html>
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Meeting Transcriber · Free Surf</title>
+<title>Meeting Transcriber · FreeSurf</title>
 <meta name="description" content="Turn audio recordings and meetings into clean, searchable transcripts with speaker labels."/>
 <style>
   :root { color-scheme: light dark; --bg:#ffffff; --text:#1d1b18; --muted:#8a8178; --brand:#1d1b18; --border:#e6e4df; }
@@ -173,16 +186,16 @@ const LANDING_HTML = `<!doctype html>
 </head>
 <body>
 <div class="wrap">
-  <a class="logo" href="https://freesurf.tools">Free Surf</a>
+  <a class="logo" href="https://freesurf.tools">FreeSurf</a>
   <h1>Meeting Transcriber</h1>
   <p class="lede">Turn recordings and meetings into clean, searchable transcripts — with speaker labels, so you always know who said what.</p>
   <div class="phone">Phone screenshots coming soon</div>
   <div class="stores">
-    <a class="store play" href="https://play.google.com/store/apps/details?id=tools.Free Surf.transcriber" target="_blank" rel="noopener">Get it on Google Play</a>
+    <a class="store play" href="https://play.google.com/store/apps/details?id=tools.freesurf.transcriber" target="_blank" rel="noopener">Get it on Google Play</a>
     <span class="store soon">App Store · Upcoming</span>
   </div>
   <footer>
-    <span>&copy; <span id="year"></span> Free Surf · Free tools, no bullshit.</span>
+    <span>&copy; <span id="year"></span> FreeSurf · Free tools, no bullshit.</span>
     <a href="https://feedfree.tech" target="_blank" rel="noopener">Feedfree Digest</a>
   </footer>
 </div>
@@ -209,17 +222,17 @@ export default {
 </urlset>`;
         return new Response(xml, { status: 200, headers: { "Content-Type": "application/xml" } });
       }
-      // Usage meter — how much of the weekly allowance is left.
+      // Usage meter — how much of the monthly allowance is left.
       if (url.pathname === "/api/usage") {
         if (env.USAGE_METERING !== "on" || !env.SUPABASE_SECRET_KEY || !env.SUPABASE_URL) {
           return jsonResponse({ error: "Usage metering not configured" }, 500, headers);
         }
-        const userId = await authedUserId(env, request.headers.get("Authorization") || "");
-        if (!userId) return jsonResponse({ error: "Unauthorized" }, 401, headers);
-        const week = weekStartIso(new Date());
-        const limit = Math.max(0, Number(env.TRANSCRIBER_WEEKLY_SECONDS) || DEFAULT_WEEKLY_SECONDS);
-        const used = await readUsage(env, userId, TRANSCRIBE_METRIC, week);
-        return jsonResponse({ usage: { metric: TRANSCRIBE_METRIC, used, limit, reset: week } }, 200, headers);
+        const userId = await resolveUserId(env, request);
+        if (!userId) return jsonResponse({ error: "Missing device id" }, 401, headers);
+        const month = monthStartIso(new Date());
+        const limit = Math.max(0, Number(env.TRANSCRIBER_MONTHLY_SECONDS) || DEFAULT_MONTHLY_SECONDS);
+        const used = await readUsage(env, userId, TRANSCRIBE_METRIC, month);
+        return jsonResponse({ usage: { metric: TRANSCRIBE_METRIC, used, limit, reset: month } }, 200, headers);
       }
       return htmlResponse(LANDING_HTML, headers);
     }
@@ -242,36 +255,38 @@ export default {
         return jsonResponse({ error: "No audio data provided" }, 400, headers);
       }
 
-      // Weekly free-allowance gate (only active when Supabase metering is configured).
-      // Duration is only known after transcription, so we pre-block when the cap is
-      // already reached, then add this clip's seconds after a successful run.
-      let meter: { userId: string; week: string; limit: number } | null = null;
+      // Monthly free-allowance gate (only active when Supabase metering is configured).
+      // Anonymous-first: identity = signed-in account OR the client's device id (X-Device-Id).
+      // Duration is only known after transcription, so we pre-block when the cap is already
+      // reached, then add this clip's seconds after a successful run.
+      let meter: { userId: string; month: string; limit: number } | null = null;
       if (env.USAGE_METERING === "on" && env.SUPABASE_SECRET_KEY && env.SUPABASE_URL) {
-        const userId = await authedUserId(env, request.headers.get("Authorization") || "");
-        if (!userId) return jsonResponse({ error: "Please sign in to use the transcriber." }, 401, headers);
-        const week = weekStartIso(new Date());
-        const limit = Math.max(0, Number(env.TRANSCRIBER_WEEKLY_SECONDS) || DEFAULT_WEEKLY_SECONDS);
-        const used = await readUsage(env, userId, TRANSCRIBE_METRIC, week);
+        const userId = await resolveUserId(env, request);
+        if (!userId) return jsonResponse({ error: "Missing device id" }, 401, headers);
+        const month = monthStartIso(new Date());
+        const limit = Math.max(0, Number(env.TRANSCRIBER_MONTHLY_SECONDS) || DEFAULT_MONTHLY_SECONDS);
+        const used = await readUsage(env, userId, TRANSCRIBE_METRIC, month);
         if (used >= limit) {
           return jsonResponse(
-            { error: "Weekly limit reached — upgrade or try again next week.", usage: { metric: TRANSCRIBE_METRIC, used, limit, reset: week } },
+            { error: "Monthly limit reached — try again next month.", usage: { metric: TRANSCRIBE_METRIC, used, limit, reset: month } },
             429,
             headers
           );
         }
-        meter = { userId, week, limit };
+        meter = { userId, month, limit };
       }
 
-      // Hosted Together Parakeet-TDT (diarize) path. Falls back to the pod when no key.
+      // Hosted Together path (model overrideable; diarize). Falls back to the pod when no key.
       if (env.TOGETHER_API_KEY) {
         try {
           const out = await transcribeWithTogether(
             env.TOGETHER_API_KEY,
+            env.TOGETHER_ASR_MODEL || DEFAULT_ASR_MODEL,
             b64ToBytes(body.audio_base64),
             sniffAudioMime(body.audio_base64),
             body.language
           );
-          if (meter) await incrementUsage(env, meter.userId, TRANSCRIBE_METRIC, meter.week, Math.max(1, Math.ceil(out.duration || 0)));
+          if (meter) await incrementUsage(env, meter.userId, TRANSCRIBE_METRIC, meter.month, Math.max(1, Math.ceil(out.duration || 0)));
           return jsonResponse(out, 200, headers);
         } catch (e: unknown) {
           return jsonResponse({ error: e instanceof Error ? e.message : "Transcription failed" }, 500, headers);
@@ -300,7 +315,7 @@ export default {
         return jsonResponse({ error: podData.error || "Transcription failed" }, podRes.status || 500, headers);
       }
 
-      if (meter) await incrementUsage(env, meter.userId, TRANSCRIBE_METRIC, meter.week, Math.max(1, Math.ceil(podData.duration || 0)));
+      if (meter) await incrementUsage(env, meter.userId, TRANSCRIBE_METRIC, meter.month, Math.max(1, Math.ceil(podData.duration || 0)));
       return jsonResponse(podData, 200, headers);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Internal server error: " + String(e);
