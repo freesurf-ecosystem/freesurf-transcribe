@@ -6,6 +6,7 @@ import { View, ActivityIndicator, AppState, Platform } from "react-native";
 import { Audio } from "expo-av";
 import { PaperProvider, MD3DarkTheme, MD3LightTheme } from "react-native-paper";
 import { requestTrackingPermissionsAsync, getTrackingPermissionsAsync } from "expo-tracking-transparency";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./lib/supabase";
 import { REVENUECAT_ANDROID_KEY } from "./lib/config";
 import { getDeviceId } from "./lib/device";
@@ -14,8 +15,11 @@ import TranscriberScreen from "./screens/TranscriberScreen";
 import AuthScreen from "./screens/AuthScreen";
 import AboutScreen from "./screens/AboutScreen";
 import SubscriptionScreen from "./screens/SubscriptionScreen";
+import AIConsentScreen from "./screens/AIConsentScreen";
 import LanguageChooser from "./screens/LanguageChooser";
 import { useAppLanguage } from "./i18n";
+
+const AI_CONSENT_KEY = "freesurf-transcriber-ai-consent-v1";
 
 const darkTheme = {
   ...MD3DarkTheme,
@@ -65,7 +69,17 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function App() {
   const [session, setSession] = useState<boolean | null>(null);
   const [isDark, setIsDark] = useState(true);
+  const [aiConsent, setAiConsent] = useState<boolean | null>(null);
   const { loaded: langLoaded, chosen: langChosen, setLanguage } = useAppLanguage();
+
+  useEffect(() => {
+    AsyncStorage.getItem(AI_CONSENT_KEY).then((v) => setAiConsent(v === "true")).catch(() => setAiConsent(false));
+  }, []);
+
+  const agreeAiConsent = async () => {
+    setAiConsent(true);
+    AsyncStorage.setItem(AI_CONSENT_KEY, "true").catch(() => {});
+  };
 
   // Ask for mic permission once the app opens (so the first Record isn't the permission prompt).
   useEffect(() => {
@@ -119,7 +133,7 @@ export default function App() {
     return () => subscription.remove();
   }, []);
 
-  if (session === null || !langLoaded) {
+  if (session === null || !langLoaded || aiConsent === null) {
     return <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0b1020" }}><ActivityIndicator color="#5b8cff" /></View>;
   }
 
@@ -128,6 +142,15 @@ export default function App() {
       <PaperProvider theme={isDark ? darkTheme : lightTheme}>
         <StatusBar style="light" />
         <LanguageChooser onSelect={setLanguage} />
+      </PaperProvider>
+    );
+  }
+
+  if (!aiConsent) {
+    return (
+      <PaperProvider theme={isDark ? darkTheme : lightTheme}>
+        <StatusBar style="light" />
+        <AIConsentScreen onAgree={agreeAiConsent} />
       </PaperProvider>
     );
   }
