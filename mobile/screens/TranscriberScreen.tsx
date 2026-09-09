@@ -313,9 +313,9 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         colors={hbColors}
         footer={themeToggleFooter}
         menuItems={[
-          { label: T.support, onPress: () => Linking.openURL("https://freesurf.tools/support") },
-          { label: T.privacy, onPress: () => Linking.openURL("https://freesurf.tools/privacy") },
-          { label: T.terms, onPress: () => Linking.openURL("https://freesurf.tools/terms") },
+          { label: T.menuSupport, onPress: () => Linking.openURL("https://freesurf.tools/support") },
+          { label: T.menuPrivacy, onPress: () => Linking.openURL("https://freesurf.tools/privacy") },
+          { label: T.menuTerms, onPress: () => Linking.openURL("https://freesurf.tools/terms") },
         ]}
       />
 
