@@ -45,6 +45,7 @@ export default function UsageMeter({ colors }: Props) {
   if (state !== "ok") return null;
   const usedMin = Math.round(usedSec / 60);
   const limitMin = Math.round(limitSec / 60);
+  const pct = limitSec > 0 ? Math.min(1, usedSec / limitSec) * 100 : 0;
 
   return (
     <View style={styles.wrap}>
@@ -52,12 +53,17 @@ export default function UsageMeter({ colors }: Props) {
       <Text style={[styles.value, { color: colors.dim }]}>
         {usedMin} / {limitMin} {T.thisMonth}
       </Text>
+      <View style={[styles.track, { backgroundColor: colors.dim + "33" }]}>
+        <View style={[styles.fill, { width: `${pct}%`, backgroundColor: colors.text }]} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: 2 },
+  wrap: { gap: 4 },
   label: { fontSize: 15 },
   value: { fontSize: 13 },
+  track: { height: 6, borderRadius: 3, overflow: "hidden", marginTop: 2 },
+  fill: { height: "100%", borderRadius: 3 },
 });
