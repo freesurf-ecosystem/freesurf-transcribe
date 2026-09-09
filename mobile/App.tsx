@@ -7,6 +7,8 @@ import { Audio } from "expo-av";
 import { PaperProvider, MD3DarkTheme, MD3LightTheme } from "react-native-paper";
 import { requestTrackingPermissionsAsync, getTrackingPermissionsAsync } from "expo-tracking-transparency";
 import { supabase } from "./lib/supabase";
+import { REVENUECAT_ANDROID_KEY } from "./lib/config";
+import Purchases from "react-native-purchases";
 import TranscriberScreen from "./screens/TranscriberScreen";
 import AuthScreen from "./screens/AuthScreen";
 import AboutScreen from "./screens/AboutScreen";
@@ -67,6 +69,16 @@ export default function App() {
   // Ask for mic permission once the app opens (so the first Record isn't the permission prompt).
   useEffect(() => {
     if (langChosen) Audio.requestPermissionsAsync().catch(() => {});
+  }, [langChosen]);
+
+  // Configure RevenueCat (Google Play) once at launch. Anonymous app user id by default.
+  useEffect(() => {
+    if (!langChosen || Platform.OS !== "android") return;
+    try {
+      Purchases.configure({ apiKey: REVENUECAT_ANDROID_KEY });
+    } catch (e: any) {
+      console.log("[Purchases] configure error:", e?.message || e);
+    }
   }, [langChosen]);
 
   useEffect(() => {
