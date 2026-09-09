@@ -27,6 +27,10 @@ export default function UsageMeter({ colors }: Props) {
         });
         const data = await res.json();
         if (active && res.ok && data?.usage) {
+          if (data.isPro) {
+            setState("off");
+            return;
+          }
           setUsedSec(Number(data.usage.used) || 0);
           setLimitSec(Number(data.usage.limit) || 0);
           setState("ok");

@@ -8,6 +8,7 @@ import { PaperProvider, MD3DarkTheme, MD3LightTheme } from "react-native-paper";
 import { requestTrackingPermissionsAsync, getTrackingPermissionsAsync } from "expo-tracking-transparency";
 import { supabase } from "./lib/supabase";
 import { REVENUECAT_ANDROID_KEY } from "./lib/config";
+import { getDeviceId } from "./lib/device";
 import Purchases from "react-native-purchases";
 import TranscriberScreen from "./screens/TranscriberScreen";
 import AuthScreen from "./screens/AuthScreen";
@@ -71,14 +72,18 @@ export default function App() {
     if (langChosen) Audio.requestPermissionsAsync().catch(() => {});
   }, [langChosen]);
 
-  // Configure RevenueCat (Google Play) once at launch. Anonymous app user id by default.
+  // Configure RevenueCat (Google Play) once at launch. appUserID = device id so the worker
+  // can verify the entitlement server-side.
   useEffect(() => {
     if (!langChosen || Platform.OS !== "android") return;
-    try {
-      Purchases.configure({ apiKey: REVENUECAT_ANDROID_KEY });
-    } catch (e: any) {
-      console.log("[Purchases] configure error:", e?.message || e);
-    }
+    (async () => {
+      try {
+        const appUserID = await getDeviceId();
+        Purchases.configure({ apiKey: REVENUECAT_ANDROID_KEY, appUserID });
+      } catch (e: any) {
+        console.log("[Purchases] configure error:", e?.message || e);
+      }
+    })();
   }, [langChosen]);
 
   useEffect(() => {

@@ -11,9 +11,13 @@ export interface Env {
   SUPABASE_SECRET_KEY?: string;
   USAGE_METERING?: string;
   TRANSCRIBER_MONTHLY_SECONDS?: string; // free allowance per month (default 7200 = 2h); set 60 to test the gate
+  // RevenueCat secret API key (Cloudflare secret). When set, the worker verifies the
+  // user's Pro entitlement server-side by device id and lets Pro bypass the allowance.
+  REVENUECAT_SECRET_KEY?: string;
 }
 
 const TRANSCRIBE_METRIC = "transcribe_seconds";
+const TRANSCRIBE_ENTITLEMENT = "pro_transcriber";
 const DEFAULT_MONTHLY_SECONDS = 7200; // 2 hours / month
 const DEFAULT_ASR_MODEL = "nvidia/parakeet-tdt-0.6b-v3";
 
@@ -56,6 +60,31 @@ async function incrementUsage(env: Env, userId: string, metric: string, period: 
   if (!res.ok) return 0;
   const n = Number(await res.text());
   return Number.isFinite(n) ? n : 0;
+}
+
+// Server-side RevenueCat entitlement check by app_user_id (= device id).
+async function rcIsPro(env: Env, appUserId: string): Promise<boolean> {
+  if (!env.REVENUECAT_SECRET_KEY) return false;
+  try {
+    const res = await fetch(
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(appUserId)}`,
+      { headers: { Authorization: `Bearer ${env.REVENUECAT_SECRET_KEY}`, Accept: "application/json" } }
+    );
+    if (!res.ok) return false;
+    const data = (await res.json()) as {
+      subscriber?: { entitlements?: Record<string, { expires_date?: string | null }> };
+    };
+    const ent = data.subscriber?.entitlements?.[TRANSCRIBE_ENTITLEMENT];
+    if (!ent) return false;
+    if (!ent.expires_date) return true;
+    return new Date(ent.expires_date).getTime() > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+function deviceIdOf(request: Request): string {
+  return request.headers.get("X-Device-Id")?.trim() || "";
 }
 
 function b64ToBytes(b64: string): Uint8Array {
@@ -229,10 +258,12 @@ export default {
         }
         const userId = await resolveUserId(env, request);
         if (!userId) return jsonResponse({ error: "Missing device id" }, 401, headers);
+        const deviceId = deviceIdOf(request);
+        const isPro = deviceId ? await rcIsPro(env, deviceId) : false;
         const month = monthStartIso(new Date());
         const limit = Math.max(0, Number(env.TRANSCRIBER_MONTHLY_SECONDS) || DEFAULT_MONTHLY_SECONDS);
         const used = await readUsage(env, userId, TRANSCRIBE_METRIC, month);
-        return jsonResponse({ usage: { metric: TRANSCRIBE_METRIC, used, limit, reset: month } }, 200, headers);
+        return jsonResponse({ isPro, usage: { metric: TRANSCRIBE_METRIC, used, limit, reset: month } }, 200, headers);
       }
       return htmlResponse(LANDING_HTML, headers);
     }
@@ -263,17 +294,21 @@ export default {
       if (env.USAGE_METERING === "on" && env.SUPABASE_SECRET_KEY && env.SUPABASE_URL) {
         const userId = await resolveUserId(env, request);
         if (!userId) return jsonResponse({ error: "Missing device id" }, 401, headers);
-        const month = monthStartIso(new Date());
-        const limit = Math.max(0, Number(env.TRANSCRIBER_MONTHLY_SECONDS) || DEFAULT_MONTHLY_SECONDS);
-        const used = await readUsage(env, userId, TRANSCRIBE_METRIC, month);
-        if (used >= limit) {
-          return jsonResponse(
-            { error: "Monthly limit reached — try again next month.", usage: { metric: TRANSCRIBE_METRIC, used, limit, reset: month } },
-            429,
-            headers
-          );
+        const deviceId = deviceIdOf(request);
+        const isPro = deviceId ? await rcIsPro(env, deviceId) : false;
+        if (!isPro) {
+          const month = monthStartIso(new Date());
+          const limit = Math.max(0, Number(env.TRANSCRIBER_MONTHLY_SECONDS) || DEFAULT_MONTHLY_SECONDS);
+          const used = await readUsage(env, userId, TRANSCRIBE_METRIC, month);
+          if (used >= limit) {
+            return jsonResponse(
+              { error: "Monthly limit reached — try again next month.", usage: { metric: TRANSCRIBE_METRIC, used, limit, reset: month } },
+              429,
+              headers
+            );
+          }
+          meter = { userId, month, limit };
         }
-        meter = { userId, month, limit };
       }
 
       // Hosted Together path (model overrideable; diarize). Falls back to the pod when no key.
