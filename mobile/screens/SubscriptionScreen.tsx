@@ -17,7 +17,7 @@ export default function SubscriptionScreen({ onBack }: Props) {
   const T = translationsFor(lang);
   const [busy, setBusy] = useState(false);
 
-  const features = [T.featureUnlimited, T.featureAccuracy, T.featureNoAds, T.featurePriority];
+  const features = [T.featureUnlimited, T.featureNoAds];
 
   const onSubscribe = () => {
     setBusy(true);
