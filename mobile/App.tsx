@@ -3,6 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator, AppState, Platform } from "react-native";
+import { Audio } from "expo-av";
 import { PaperProvider, MD3DarkTheme, MD3LightTheme } from "react-native-paper";
 import { requestTrackingPermissionsAsync, getTrackingPermissionsAsync } from "expo-tracking-transparency";
 import { supabase } from "./lib/supabase";
@@ -60,6 +61,11 @@ export default function App() {
   const [session, setSession] = useState<boolean | null>(null);
   const [isDark, setIsDark] = useState(true);
   const { loaded: langLoaded, chosen: langChosen, setLanguage } = useAppLanguage();
+
+  // Ask for mic permission once the app opens (so the first Record isn't the permission prompt).
+  useEffect(() => {
+    if (langChosen) Audio.requestPermissionsAsync().catch(() => {});
+  }, [langChosen]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(Boolean(data.session)));
