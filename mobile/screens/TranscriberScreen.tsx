@@ -16,7 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FloatingHamburger from "../components/FloatingHamburger";
 import UsageMeter from "../components/UsageMeter";
-import { translations, useAppLanguage } from "../i18n";
+import { translationsFor, useAppLanguage } from "../i18n";
 
 import { WORKER_URL } from "../lib/config";
 import { getDeviceId } from "../lib/device";
@@ -50,7 +50,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
 
   const recordingRef = useRef<Audio.Recording | null>(null);
   const { lang } = useAppLanguage();
-  const T = translations[lang];
+  const T = translationsFor(lang);
 
   useEffect(() => { loadHistory(); }, []);
   async function loadHistory() {
@@ -313,6 +313,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         colors={hbColors}
         footer={themeToggleFooter}
         menuItems={[
+          { label: T.goPro, onPress: () => navigation?.navigate("Subscription") },
           { label: T.menuSupport, onPress: () => Linking.openURL("https://freesurf.tools/support") },
           { label: T.menuPrivacy, onPress: () => Linking.openURL("https://freesurf.tools/privacy") },
           { label: T.menuTerms, onPress: () => Linking.openURL("https://freesurf.tools/terms") },

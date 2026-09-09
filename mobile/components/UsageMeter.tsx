@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { WORKER_URL } from "../lib/config";
 import { getDeviceId } from "../lib/device";
-import { translations, useAppLanguage } from "../i18n";
+import { translationsFor, useAppLanguage } from "../i18n";
 
 type Props = { colors: { dim: string; text: string } };
 
@@ -12,7 +12,7 @@ type Props = { colors: { dim: string; text: string } };
  */
 export default function UsageMeter({ colors }: Props) {
   const { lang } = useAppLanguage();
-  const T = translations[lang];
+  const T = translationsFor(lang);
   const [state, setState] = useState<"loading" | "ok" | "off">("loading");
   const [usedSec, setUsedSec] = useState(0);
   const [limitSec, setLimitSec] = useState(0);
