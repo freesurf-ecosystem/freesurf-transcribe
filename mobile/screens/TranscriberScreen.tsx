@@ -300,7 +300,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         hitSlop={8}
         style={{ alignSelf: "center", padding: 6 }}
       >
-        <Text style={{ fontSize: 20, color: hbColors.text }}>◐</Text>
+        <Text style={{ fontSize: 26, color: hbColors.text }}>◐</Text>
       </Pressable>
       <UsageMeter colors={hbColors} />
     </View>
