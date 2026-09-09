@@ -12,7 +12,7 @@ export const translations: Record<Lang, Strings> = {
     emptyState: "Tap record to start transcribing, or import an audio file.",
     untitled: "Untitled transcript", noText: "No text returned", speaker: "Speaker",
     tapToExpand: "Tap to expand...", menuSupport: "Support", menuPrivacy: "Privacy",
-    menuTerms: "Terms", freeMinutes: "Free minutes", thisMonth: "this month",
+    menuTerms: "Terms", freeMinutes: "Free credits", thisMonth: "this month",
   },
   es: {
     import: "Importar", record: "Grabar", stop: "Detener", transcribing: "Transcribiendo…",
