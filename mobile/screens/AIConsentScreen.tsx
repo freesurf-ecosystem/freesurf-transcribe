@@ -7,10 +7,10 @@ type Props = { onAgree: () => void };
 
 const TERMS_URL = "https://freesurf.tools/terms";
 const PRIVACY_URL = "https://freesurf.tools/privacy";
-const AI_URL = "https://freesurf.tools/privacy"; // dedicated AI & data processing doc link
+const AI_URL = PRIVACY_URL; // AI data processing is documented in the Privacy Policy
 
 const AI_COPY =
-  "Transcriber uses AI to turn speech into text. When you record or import audio, we send that audio to the Together AI serverless network, where open-source models process it and return a written transcript to you.";
+  "Transcriber uses AI to turn speech into text. When you record or import audio, we send your audio to the Together AI serverless network, where open-source models process it and return a written transcript to you.";
 
 export default function AIConsentScreen({ onAgree }: Props) {
   const theme = useTheme();
