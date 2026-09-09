@@ -2,10 +2,9 @@ import React, { useState, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
-import { View, ActivityIndicator, AppState, Platform } from "react-native";
+import { View, ActivityIndicator, Platform } from "react-native";
 import { Audio } from "expo-av";
 import { PaperProvider, MD3DarkTheme, MD3LightTheme } from "react-native-paper";
-import { requestTrackingPermissionsAsync, getTrackingPermissionsAsync } from "expo-tracking-transparency";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./lib/supabase";
 import { REVENUECAT_ANDROID_KEY } from "./lib/config";
@@ -104,33 +103,6 @@ export default function App() {
     supabase.auth.getSession().then(({ data }) => setSession(Boolean(data.session)));
     const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setSession(Boolean(s)));
     return () => listener.subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (Platform.OS !== "ios") return;
-
-    let requested = false;
-    const requestATT = async () => {
-      if (requested) return;
-      requested = true;
-      try {
-        const { status } = await getTrackingPermissionsAsync();
-        console.log("[ATT] initial status:", status);
-        if (status === "undetermined") {
-          const req = await requestTrackingPermissionsAsync();
-          console.log("[ATT] requested, new status:", req.status);
-        }
-      } catch (e: any) {
-        console.log("[ATT] error:", e?.message || e);
-      }
-    };
-
-    const subscription = AppState.addEventListener("change", (nextState) => {
-      if (nextState === "active") requestATT();
-    });
-    if (AppState.currentState === "active") requestATT();
-
-    return () => subscription.remove();
   }, []);
 
   if (session === null || !langLoaded || aiConsent === null) {
