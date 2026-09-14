@@ -103,7 +103,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       const res = await fetch(`${WORKER_URL}/api/transcribe`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Device-Id": deviceId },
-        body: JSON.stringify({ audio_base64: base64 }),
+        body: JSON.stringify({ audio_base64: base64, language: lang }),
       });
       const data = await res.json();
       console.log("[Transcriber] Response:", JSON.stringify(data).slice(0, 200));

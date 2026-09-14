@@ -21,6 +21,7 @@ const TRANSCRIBE_ENTITLEMENT = "pro_transcriber";
 const CONSENT_VERSION = "2026-09-09";
 const DEFAULT_MONTHLY_SECONDS = 7200; // 2 hours / month
 const DEFAULT_ASR_MODEL = "nvidia/parakeet-tdt-0.6b-v3";
+const DEFAULT_MULTILINGUAL_ASR_MODEL = "openai/whisper-large-v3";
 
 function srHeaders(env: Env): Record<string, string> {
   return { apikey: env.SUPABASE_SECRET_KEY || "", Authorization: `Bearer ${env.SUPABASE_SECRET_KEY || ""}` };
@@ -342,9 +343,15 @@ export default {
       // Hosted Together path (model overrideable; diarize). Falls back to the pod when no key.
       if (env.TOGETHER_API_KEY) {
         try {
+          // Parakeet is English-only; use a multilingual Whisper model for any non-English
+          // request so the audio is transcribed (not translated into English).
+          const reqLang = body.language && body.language !== "auto" ? body.language : "";
+          const model =
+            env.TOGETHER_ASR_MODEL ||
+            (reqLang && reqLang !== "en" ? DEFAULT_MULTILINGUAL_ASR_MODEL : DEFAULT_ASR_MODEL);
           const out = await transcribeWithTogether(
             env.TOGETHER_API_KEY,
-            env.TOGETHER_ASR_MODEL || DEFAULT_ASR_MODEL,
+            model,
             b64ToBytes(body.audio_base64),
             sniffAudioMime(body.audio_base64),
             body.language
