@@ -456,7 +456,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
 
       <Surface style={{ position: "absolute", bottom: 0, left: 0, right: 0, flexDirection: "row", padding: 12, paddingBottom: 34, gap: 12, elevation: 2 }}>
         <Button mode="outlined" style={{ flex: 1 }} onPress={handleImport} disabled={isProcessing} icon={() => <FolderOpen size={18} color={theme.colors.onSurface} />}>
-          Import
+          {T.import}
         </Button>
         {isProcessing ? (
           <View style={{ flex: 2, flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: theme.colors.surfaceVariant, borderRadius: 100, gap: 8 }}>

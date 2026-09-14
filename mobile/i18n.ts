@@ -26,6 +26,7 @@ export const translations: Record<Lang, Strings> = {
     proNote: "Subscriptions keep the free tier free for everyone.",
   },
   es: {
+    goPro: "Hazte Pro", languageLabel: "Idioma",
     import: "Importar", record: "Grabar", stop: "Detener", transcribing: "Transcribiendo…",
     emptyState: "Toca grabar para empezar a transcribir o importa un archivo de audio.",
     untitled: "Transcripción sin título", noText: "No se devolvió texto", speaker: "Interlocutor",
@@ -33,6 +34,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Términos", freeMinutes: "Minutos gratis", thisMonth: "este mes",
   },
   pt: {
+    goPro: "Seja Pro", languageLabel: "Idioma",
     import: "Importar", record: "Gravar", stop: "Parar", transcribing: "Transcrevendo…",
     emptyState: "Toque em gravar para começar a transcrever ou importe um arquivo de áudio.",
     untitled: "Transcrição sem título", noText: "Nenhum texto retornado", speaker: "Orador",
@@ -40,6 +42,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Termos", freeMinutes: "Minutos grátis", thisMonth: "este mês",
   },
   hi: {
+    goPro: "Pro लें", languageLabel: "भाषा",
     import: "आयात करें", record: "रिकॉर्ड करें", stop: "रोकें", transcribing: "ट्रांसक्राइब हो रहा है…",
     emptyState: "ट्रांसक्राइब करने के लिए रिकॉर्ड दबाएं या ऑडियो फ़ाइल आयात करें।",
     untitled: "बिना शीर्षक ट्रांसक्रिप्शन", noText: "कोई टेक्स्ट नहीं मिला", speaker: "वक्ता",
@@ -47,6 +50,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "नियम", freeMinutes: "मुफ्त मिनट", thisMonth: "इस महीने",
   },
   id: {
+    goPro: "Jadi Pro", languageLabel: "Bahasa",
     import: "Impor", record: "Rekam", stop: "Berhenti", transcribing: "Mentranskripsikan…",
     emptyState: "Ketuk rekam untuk mulai mentranskripsikan, atau impor file audio.",
     untitled: "Transkrip tanpa judul", noText: "Tidak ada teks", speaker: "Pembicara",
@@ -54,6 +58,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Ketentuan", freeMinutes: "Menit gratis", thisMonth: "bulan ini",
   },
   ms: {
+    goPro: "Jadi Pro", languageLabel: "Bahasa",
     import: "Import", record: "Rakam", stop: "Henti", transcribing: "Mentranskripsi…",
     emptyState: "Ketuk rakam untuk mula mentranskripsi, atau import fail audio.",
     untitled: "Transkrip tanpa tajuk", noText: "Tiada teks", speaker: "Penceramah",
@@ -61,6 +66,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Terma", freeMinutes: "Minit percuma", thisMonth: "bulan ini",
   },
   th: {
+    goPro: "อัปเกรด Pro", languageLabel: "ภาษา",
     import: "นำเข้า", record: "บันทึก", stop: "หยุด", transcribing: "กำลังถอดเสียง…",
     emptyState: "แตะบันทึกเพื่อเริ่มถอดเสียง หรือนำเข้าไฟล์เสียง",
     untitled: "การถอดเสียงที่ไม่มีชื่อ", noText: "ไม่มีข้อความ", speaker: "ผู้พูด",
@@ -68,6 +74,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "ข้อกำหนด", freeMinutes: "นาทีฟรี", thisMonth: "เดือนนี้",
   },
   vi: {
+    goPro: "Nâng cấp Pro", languageLabel: "Ngôn ngữ",
     import: "Nhập", record: "Ghi âm", stop: "Dừng", transcribing: "Đang chuyển chữ…",
     emptyState: "Chạm ghi âm để bắt đầu phiên âm hoặc nhập tệp âm thanh.",
     untitled: "Bản phiên âm chưa đặt tên", noText: "Không có văn bản", speaker: "Người nói",
@@ -75,6 +82,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Điều khoản", freeMinutes: "Phút miễn phí", thisMonth: "tháng này",
   },
   tl: {
+    goPro: "Mag-Pro", languageLabel: "Wika",
     import: "Import", record: "Mag-record", stop: "Itigil", transcribing: "Nagta-transcribe…",
     emptyState: "I-tap ang record para magsimulang mag-transcribe, o mag-import ng audio file.",
     untitled: "Transkripsyon na walang pamagat", noText: "Walang tekstong ibinalik", speaker: "Nagsasalita",
@@ -82,6 +90,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Terms", freeMinutes: "Libreng minuto", thisMonth: "ngayong buwan",
   },
   de: {
+    goPro: "Pro werden", languageLabel: "Sprache",
     import: "Importieren", record: "Aufnehmen", stop: "Stopp", transcribing: "Transkribiere…",
     emptyState: "Tippen Sie auf Aufnehmen, um mit der Transkription zu beginnen, oder importieren Sie eine Audiodatei.",
     untitled: "Unbenannte Transkription", noText: "Kein Text zurückgegeben", speaker: "Sprecher",
@@ -89,6 +98,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Nutzungsbedingungen", freeMinutes: "Kostenlose Minuten", thisMonth: "diesen Monat",
   },
   fr: {
+    goPro: "Passer à Pro", languageLabel: "Langue",
     import: "Importer", record: "Enregistrer", stop: "Arrêter", transcribing: "Transcription…",
     emptyState: "Touchez Enregistrer pour commencer la transcription ou importez un fichier audio.",
     untitled: "Transcription sans titre", noText: "Aucun texte retourné", speaker: "Intervenant",
@@ -96,6 +106,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Conditions", freeMinutes: "Minutes gratuites", thisMonth: "ce mois-ci",
   },
   it: {
+    goPro: "Passa a Pro", languageLabel: "Lingua",
     import: "Importa", record: "Registra", stop: "Ferma", transcribing: "Trascrizione…",
     emptyState: "Tocca Registra per iniziare la trascrizione o importa un file audio.",
     untitled: "Trascrizione senza titolo", noText: "Nessun testo restituito", speaker: "Relatore",
@@ -103,6 +114,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Termini", freeMinutes: "Minuti gratis", thisMonth: "questo mese",
   },
   nl: {
+    goPro: "Word Pro", languageLabel: "Taal",
     import: "Importeren", record: "Opnemen", stop: "Stoppen", transcribing: "Transcriberen…",
     emptyState: "Tik op Opnemen om te beginnen met transcriberen of importeer een audiobestand.",
     untitled: "Transcript zonder titel", noText: "Geen tekst geretourneerd", speaker: "Spreker",
@@ -110,6 +122,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Voorwaarden", freeMinutes: "Gratis minuten", thisMonth: "deze maand",
   },
   pl: {
+    goPro: "Przejdź na Pro", languageLabel: "Język",
     import: "Importuj", record: "Nagraj", stop: "Zatrzymaj", transcribing: "Transkrybuję…",
     emptyState: "Dotknij Nagraj, aby rozpocząć transkrypcję, lub zaimportuj plik audio.",
     untitled: "Transkrypcja bez tytułu", noText: "Brak zwróconego tekstu", speaker: "Mówca",
@@ -117,6 +130,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Warunki", freeMinutes: "Darmowe minuty", thisMonth: "w tym miesiącu",
   },
   sv: {
+    goPro: "Bli Pro", languageLabel: "Språk",
     import: "Importera", record: "Spela in", stop: "Stoppa", transcribing: "Transkriberar…",
     emptyState: "Tryck på Spela in för att börja transkribera eller importera en ljudfil.",
     untitled: "Transkription utan titel", noText: "Ingen text returnerad", speaker: "Talare",
@@ -124,6 +138,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Villkor", freeMinutes: "Gratis minuter", thisMonth: "den här månaden",
   },
   no: {
+    goPro: "Bli Pro", languageLabel: "Språk",
     import: "Importer", record: "Ta opp", stop: "Stopp", transcribing: "Transkriberer…",
     emptyState: "Trykk på Ta opp for å starte transkribering eller importer en lydfil.",
     untitled: "Transkripsjon uten tittel", noText: "Ingen tekst returnert", speaker: "Taler",
@@ -131,6 +146,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Vilkår", freeMinutes: "Gratis minutter", thisMonth: "denne måneden",
   },
   da: {
+    goPro: "Bliv Pro", languageLabel: "Sprog",
     import: "Importer", record: "Optag", stop: "Stop", transcribing: "Transskriberer…",
     emptyState: "Tryk på Optag for at starte transskribering eller importér en lydfil.",
     untitled: "Transskription uden titel", noText: "Ingen tekst returneret", speaker: "Taler",
@@ -138,6 +154,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Vilkår", freeMinutes: "Gratis minutter", thisMonth: "denne måned",
   },
   fi: {
+    goPro: "Hanki Pro", languageLabel: "Kieli",
     import: "Tuo", record: "Nauhoita", stop: "Lopeta", transcribing: "Kirjoitetaan puhtaaksi…",
     emptyState: "Aloita puhtaaksikirjoitus napauttamalla Nauhoita tai tuo äänitiedosto.",
     untitled: "Nimetön kirjoitus", noText: "Ei palautettua tekstiä", speaker: "Puhuja",
@@ -145,6 +162,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Ehdot", freeMinutes: "Ilmaiset minuutit", thisMonth: "tässä kuussa",
   },
   cs: {
+    goPro: "Přejít na Pro", languageLabel: "Jazyk",
     import: "Importovat", record: "Nahrát", stop: "Zastavit", transcribing: "Přepis…",
     emptyState: "Klepnutím na Nahrát zahájíte přepis nebo importujte zvukový soubor.",
     untitled: "Přepis bez názvu", noText: "Žádný vrácený text", speaker: "Mluvčí",
@@ -152,6 +170,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Podmínky", freeMinutes: "Volné minuty", thisMonth: "tento měsíc",
   },
   el: {
+    goPro: "Γίνε Pro", languageLabel: "Γλώσσα",
     import: "Εισαγωγή", record: "Εγγραφή", stop: "Διακοπή", transcribing: "Μεταγραφή…",
     emptyState: "Πατήστε Εγγραφή για να ξεκινήσετε τη μεταγραφή ή εισαγάγετε ένα αρχείο ήχου.",
     untitled: "Μεταγραφή χωρίς τίτλο", noText: "Δεν επιστράφηκε κείμενο", speaker: "Ομιλητής",
@@ -159,6 +178,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Όροι", freeMinutes: "Δωρεάν λεπτά", thisMonth: "αυτόν τον μήνα",
   },
   ro: {
+    goPro: "Treci la Pro", languageLabel: "Limbă",
     import: "Importă", record: "Înregistrează", stop: "Oprește", transcribing: "Transcriere…",
     emptyState: "Atingeți Înregistrare pentru a începe transcrierea sau importați un fișier audio.",
     untitled: "Transcriere fără titlu", noText: "Niciun text returnat", speaker: "Vorbitor",
@@ -166,6 +186,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Termeni", freeMinutes: "Minute gratuite", thisMonth: "luna aceasta",
   },
   hu: {
+    goPro: "Válts Pro-ra", languageLabel: "Nyelv",
     import: "Importálás", record: "Felvétel", stop: "Leállítás", transcribing: "Átírás…",
     emptyState: "Az átíráshoz érintse meg a Felvételt, vagy importáljon hangfájlt.",
     untitled: "Cím nélküli átirat", noText: "Nincs visszaadott szöveg", speaker: "Beszélő",
@@ -173,6 +194,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Feltételek", freeMinutes: "Ingyenes percek", thisMonth: "ebben a hónapban",
   },
   uk: {
+    goPro: "Перейти на Pro", languageLabel: "Мова",
     import: "Імпорт", record: "Запис", stop: "Стоп", transcribing: "Транскрибуємо…",
     emptyState: "Натисніть «Запис», щоб почати транскрибування, або імпортуйте аудіофайл.",
     untitled: "Транскрипт без назви", noText: "Немає тексту", speaker: "Говорящий",
@@ -180,6 +202,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Умови", freeMinutes: "Безкоштовні хвилини", thisMonth: "цього місяця",
   },
   ru: {
+    goPro: "Перейти на Pro", languageLabel: "Язык",
     import: "Импорт", record: "Запись", stop: "Стоп", transcribing: "Транскрибируем…",
     emptyState: "Нажмите «Запись», чтобы начать транскрибацию, или импортируйте аудиофайл.",
     untitled: "Транскрипт без названия", noText: "Нет текста", speaker: "Говорящий",
@@ -187,6 +210,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Условия", freeMinutes: "Бесплатные минуты", thisMonth: "в этом месяце",
   },
   ar: {
+    goPro: "الترقية إلى Pro", languageLabel: "اللغة",
     import: "استيراد", record: "تسجيل", stop: "إيقاف", transcribing: "جارٍ التفريغ…",
     emptyState: "اضغط على تسجيل لبدء التفريغ أو استيراد ملف صوتي.",
     untitled: "تفريغ بدون عنوان", noText: "لا يوجد نص", speaker: "المتحدث",
@@ -194,6 +218,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "الشروط", freeMinutes: "دقائق مجانية", thisMonth: "هذا الشهر",
   },
   bn: {
+    goPro: "Pro নিন", languageLabel: "ভাষা",
     import: "আমদানি", record: "রেকর্ড", stop: "বন্ধ", transcribing: "ট্রান্সক্রিপশন হচ্ছে…",
     emptyState: "ট্রান্সক্রিপশন শুরু করতে রেকর্ড চাপুন বা একটি অডিও ফাইল আমদানি করুন।",
     untitled: "শিরোনামহীন ট্রান্সক্রিপ্ট", noText: "কোন পাঠ্য নেই", speaker: "বক্তা",
@@ -201,6 +226,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "শর্তাবলী", freeMinutes: "ফ্রি মিনিট", thisMonth: "এই মাসে",
   },
   ur: {
+    goPro: "Pro لیں", languageLabel: "زبان",
     import: "درآمد", record: "ریکارڈ", stop: "روکیں", transcribing: "نقل کر رہا ہے…",
     emptyState: "نقل شروع کرنے کے لیے ریکارڈ دبائیں یا آڈیو فائل درآمد کریں۔",
     untitled: "بلا عنوان نقلی", noText: "کوئی متن نہیں", speaker: "مقرر",
@@ -208,6 +234,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "شرائط", freeMinutes: "مفت منٹ", thisMonth: "اس ماہ",
   },
   mr: {
+    goPro: "Pro घ्या", languageLabel: "भाषा",
     import: "आयात करा", record: "रेकॉर्ड करा", stop: "थांबवा", transcribing: "लिप्यंतर होत आहे…",
     emptyState: "लिप्यंतरण सुरू करण्यासाठी रेकॉर्ड करा किंवा ऑडिओ फाइल आयात करा.",
     untitled: "शीर्षक नसलेला उतारा", noText: "मजकूर नाही", speaker: "वक्ता",
@@ -215,6 +242,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "अटी", freeMinutes: "विनामूल्य मिनिटे", thisMonth: "या महिन्यात",
   },
   te: {
+    goPro: "Pro పొందండి", languageLabel: "భాష",
     import: "దిగుమతి", record: "రికార్డ్", stop: "ఆపు", transcribing: "ట్రాన్స్క్రైబ్ అవుతోంది…",
     emptyState: "ట్రాన్స్క్రైబ్ ప్రారంభించడానికి రికార్డ్ నొక్కండి లేదా ఆడియో ఫైల్ దిగుమతి చేయండి.",
     untitled: "శీర్షిక లేని ట్రాన్స్క్రిప్ట్", noText: "టెక్స్ట్ లేదు", speaker: "మాట్లాడే వ్యక్తి",
@@ -222,6 +250,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "నిబంధనలు", freeMinutes: "ఉచిత నిమిషాలు", thisMonth: "ఈ నెలలో",
   },
   ta: {
+    goPro: "Pro பெறுக", languageLabel: "மொழி",
     import: "இறக்குமதி", record: "பதிவு", stop: "நிறுத்து", transcribing: "பிரதி எடுக்கப்படுகிறது…",
     emptyState: "பிரதி எடுக்க பதிவு தட்டவும் அல்லது ஆடியோ கோப்பை இறக்குமதி செய்யவும்.",
     untitled: "தலைப்பு இல்லாத பிரதி", noText: "உரை இல்லை", speaker: "பேச்சாளர்",
@@ -229,6 +258,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "விதிமுறைகள்", freeMinutes: "இலவச நிமிடங்கள்", thisMonth: "இந்த மாதம்",
   },
   fa: {
+    goPro: "ارتقا به Pro", languageLabel: "زبان",
     import: "واردات", record: "ضبط", stop: "توقف", transcribing: "در حال رونویسی…",
     emptyState: "برای شروع رونویسی روی ضبط ضربه بزنید یا فایل صوتی وارد کنید.",
     untitled: "رونوشت بدون عنوان", noText: "متنی برگردانده نشد", speaker: "گوینده",
@@ -236,6 +266,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "شرایط", freeMinutes: "دقیقه رایگان", thisMonth: "این ماه",
   },
   tr: {
+    goPro: "Pro'ya Geç", languageLabel: "Dil",
     import: "İçe Aktar", record: "Kaydet", stop: "Durdur", transcribing: "Yazıya dökülüyor…",
     emptyState: "Yazıya dökmek için Kaydet'e dokunun veya bir ses dosyası içe aktarın.",
     untitled: "Başlıksız döküm", noText: "Metin döndürülmedi", speaker: "Konuşmacı",
@@ -243,6 +274,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "Şartlar", freeMinutes: "Ücretsiz dakika", thisMonth: "bu ay",
   },
   ko: {
+    goPro: "Pro로 업그레이드", languageLabel: "언어",
     import: "가져오기", record: "녹음", stop: "중지", transcribing: "받아쓰는 중…",
     emptyState: "녹음을 눌러 받아쓰기를 시작하거나 오디오 파일을 가져오세요.",
     untitled: "제목 없는 대본", noText: "텍스트가 없음", speaker: "화자",
@@ -250,6 +282,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "약관", freeMinutes: "무료 분", thisMonth: "이번 달",
   },
   ja: {
+    goPro: "Pro にする", languageLabel: "言語",
     import: "インポート", record: "録音", stop: "停止", transcribing: "書き起こし中…",
     emptyState: "録音をタップして書き起こしを開始するか、オーディオファイルをインポートしてください。",
     untitled: "無題の書き起こし", noText: "テキストがありません", speaker: "話者",
@@ -257,6 +290,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "利用規約", freeMinutes: "無料分", thisMonth: "今月",
   },
   zh: {
+    goPro: "升级 Pro", languageLabel: "语言",
     import: "导入", record: "录音", stop: "停止", transcribing: "转录中…",
     emptyState: "点击录音开始转录，或导入音频文件。",
     untitled: "未命名转录", noText: "无文本返回", speaker: "说话人",
@@ -264,6 +298,7 @@ export const translations: Record<Lang, Strings> = {
     menuTerms: "条款", freeMinutes: "免费分钟", thisMonth: "本月",
   },
   ha: {
+    goPro: "Samu Pro", languageLabel: "Harshe",
     import: "Shigo da", record: "Yi rikodin", stop: "Tsaya", transcribing: "Ana fassara…",
     emptyState: "Danna rikodin don fara fassara ko shigo da fayil mai jiwowar sauti.",
     untitled: "Fassara ba tare da suna ba", noText: "Babu rubutu", speaker: "Mai magana",
