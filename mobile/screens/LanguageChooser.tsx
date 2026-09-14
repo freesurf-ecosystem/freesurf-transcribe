@@ -3,10 +3,10 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { deviceLang, translations } from "../i18n";
 import { SUPPORTED_LANGUAGES } from "../lib/languages";
 
-type Props = { onSelect: (code: string) => void };
+type Props = { onSelect: (code: string) => void; onBack?: () => void };
 
 /** Language chooser shown on first launch. Selecting a language persists it and enters the app. */
-export default function LanguageChooser({ onSelect }: Props) {
+export default function LanguageChooser({ onSelect, onBack }: Props) {
   const detected = deviceLang();
   // Only offer languages we've actually translated (UI falls back to English otherwise).
   const offered = useMemo(
@@ -17,6 +17,11 @@ export default function LanguageChooser({ onSelect }: Props) {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
+        {onBack && (
+          <Pressable style={styles.back} onPress={onBack}>
+            <Text style={styles.backText}>‹ Back</Text>
+          </Pressable>
+        )}
         <Text style={styles.title}>Choose your language</Text>
         <Text style={styles.subtitle}>Used to localize the app. You can change it anytime in the menu.</Text>
         {translations[detected] && (
@@ -47,6 +52,8 @@ export default function LanguageChooser({ onSelect }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#000" },
   header: { paddingHorizontal: 24, paddingTop: 70, paddingBottom: 16 },
+  back: { paddingVertical: 4, alignSelf: "flex-start", marginBottom: 6 },
+  backText: { color: "#5b8cff", fontSize: 16, fontWeight: "600" },
   title: { fontSize: 26, fontWeight: "800", color: "#e8ecff" },
   subtitle: { fontSize: 14, color: "#8899bb", marginTop: 6 },
   detected: {

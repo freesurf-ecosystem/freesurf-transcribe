@@ -314,6 +314,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         footer={themeToggleFooter}
         menuItems={[
           { label: T.goPro, onPress: () => navigation?.navigate("Subscription") },
+          { label: T.languageLabel, onPress: () => navigation?.navigate("Language") },
           { label: T.menuSupport, onPress: () => Linking.openURL("https://freesurf.tools/support") },
           { label: T.menuPrivacy, onPress: () => Linking.openURL("https://freesurf.tools/privacy") },
           { label: T.menuTerms, onPress: () => Linking.openURL("https://freesurf.tools/terms") },
