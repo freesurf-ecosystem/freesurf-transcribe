@@ -9,6 +9,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./lib/supabase";
 import { REVENUECAT_ANDROID_KEY } from "./lib/config";
 import { getDeviceId } from "./lib/device";
+import { recordConsent } from "./lib/consent";
 import Purchases from "react-native-purchases";
 import TranscriberScreen from "./screens/TranscriberScreen";
 import AuthScreen from "./screens/AuthScreen";
@@ -78,6 +79,7 @@ export default function App() {
   const agreeAiConsent = async () => {
     setAiConsent(true);
     AsyncStorage.setItem(AI_CONSENT_KEY, "true").catch(() => {});
+    recordConsent();
   };
 
   // Ask for mic permission once the app opens (so the first Record isn't the permission prompt).
