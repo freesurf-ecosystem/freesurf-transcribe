@@ -10,7 +10,7 @@ routes = [
 ENVIRONMENT = "production"
 SUPABASE_URL = "https://jstojewashwoswsskwjk.supabase.co"
 TOGETHER_ASR_MODEL = "openai/whisper-large-v3"
-TRANSCRIBER_MONTHLY_SECONDS = "300"
+TRANSCRIBER_MONTHLY_SECONDS = "18000"
 USAGE_METERING = "on"
 # ASR model override (default nvidia/parakeet-tdt-0.6b-v3). Try openai/whisper-large-v3 for multilingual.
 # Set via `wrangler secret put TOGETHER_ASR_MODEL` or as a var.
