@@ -2,7 +2,7 @@
   "expo": {
     "name": "Transcriber",
     "slug": "freesurf-transcriber",
-    "version": "0.1.12",
+    "version": "0.1.13",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -15,7 +15,7 @@
     ],
     "android": {
       "package": "tools.freesurf.transcriber",
-      "versionCode": 14
+      "versionCode": 15
     },
     "ios": {
       "bundleIdentifier": "tools.freesurf.transcriber",
@@ -67,7 +67,8 @@
             "targetSdkVersion": 36,
             "buildToolsVersion": "36.0.0",
             "ndkVersion": "27.1.12297006",
-            "useLegacyPackaging": false
+            "useLegacyPackaging": false,
+            "blockedPermissions": ["com.google.android.gms.permission.AD_ID"]
           }
         }
       ],
