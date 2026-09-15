@@ -4,10 +4,6 @@ Speech-to-text with speaker diarization. No account required. No audio stored.
 
 Record or import audio, and get a full transcript with speaker labels, timestamps, and plain text export. Built for meetings, interviews, podcasts, and conversations.
 
-## Why it's free
-
-The transcriber uses [faster-whisper](https://github.com/SYSTRAN/faster-whisper) for transcription and [pyannote.audio](https://github.com/pyannote/pyannote-audio) for speaker diarization — both self-hosted on our own GPU infrastructure. No per-minute API fees. The app is supported by minimal, non-intrusive ads. Subscription removes ads.
-
 ## Privacy
 
 - No account or login required
@@ -39,6 +35,6 @@ Speaker diarization labels each segment of the transcript with who's speaking, w
 - **Backend:** Cloudflare Worker
 - **STT:** faster-whisper on RunPod GPU (self-hosted)
 - **Diarization:** pyannote.audio (self-hosted)
-- **No OpenAI, no Google, no API subscriptions**
+
 
 [Privacy Policy](https://freesurf.tools/privacy) · [Terms](https://freesurf.tools/terms)
