@@ -72,7 +72,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         perm = await Audio.requestPermissionsAsync();
       }
       if (perm.status !== "granted") {
-        Alert.alert("Permission needed", "Please tap the record button one more time.");
+        Alert.alert(T.permissionNeeded, T.permissionRetry);
         return;
       }
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
@@ -81,7 +81,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       setIsRecording(true);
     } catch (e: any) {
       console.error("[Transcriber] Record error:", e?.message ?? e);
-      Alert.alert("Error", e?.message || "Could not start recording.");
+      Alert.alert(T.errorTitle, e?.message || T.couldNotStartRecording);
     }
   }
   async function stopRecording() {
@@ -92,7 +92,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       const uri = recordingRef.current.getURI();
       recordingRef.current = null;
       if (uri) transcribeAudio(uri, uri);
-    } catch { Alert.alert("Error", "Could not stop recording."); }
+    } catch { Alert.alert(T.errorTitle, T.couldNotStopRecording); }
   }
   async function transcribeAudio(audioUri: string, originalUri?: string, isImport?: boolean) {
     setIsProcessing(true);
@@ -142,11 +142,11 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       setExpandedId(entry.id); // show the full transcript immediately (not the collapsed preview)
       setResult(null);
     } catch (e: any) {
-      const msg = e?.message || "Transcription failed.";
+      const msg = e?.message || T.transcriptionFailed;
       Alert.alert(
-        "Error",
+        T.errorTitle,
         isImport
-          ? `${msg}\n\nSupported audio files: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.`
+          ? `${msg}\n\n${T.supportedFiles}`
           : msg
       );
     }
@@ -157,7 +157,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       const r = await DocumentPicker.getDocumentAsync({ type: ["audio/*"], copyToCacheDirectory: true });
       if (r.canceled || !r.assets?.[0]) return;
       transcribeAudio(r.assets[0].uri, r.assets[0].uri, true);
-    } catch { Alert.alert("Error", "Could not import file."); }
+    } catch { Alert.alert(T.errorTitle, T.couldNotImport); }
   }
   async function playAudio(entry: HistoryEntry) {
     if (!entry.audioUri) return;
@@ -188,7 +188,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       setAudioDur(0);
       setAudioPos(0);
       setIsPlayingAudio(true);
-    } catch { Alert.alert("Error", "Could not play audio."); }
+    } catch { Alert.alert(T.errorTitle, T.couldNotPlay); }
   }
   async function seekAudio(ms: number) {
     try { await audioSoundRef.current?.setPositionAsync(ms); } catch {}
@@ -231,14 +231,14 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
     if (entry.audioUri && await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(entry.audioUri);
     } else {
-      Alert.alert("No audio", "Original recording not available.");
+      Alert.alert(T.noAudioTitle, T.noAudioMessage);
     }
   }
   function deleteEntry(id: string) {
     const entry = history.find(e => e.id === id);
-    Alert.alert("Delete", "Delete this transcription?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: async () => {
+    Alert.alert(T.deleteTitle, T.deleteConfirm, [
+      { text: T.cancel, style: "cancel" },
+      { text: T.deleteAction, style: "destructive", onPress: async () => {
         if (entry?.audioUri) FileSystem.deleteAsync(entry.audioUri, { idempotent: true }).catch(() => {});
         await saveHistory(history.filter(e => e.id !== id));
         if (openMenuId === id) setOpenMenuId(null);
@@ -296,7 +296,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
     <View style={{ flexDirection: "column", gap: 10 }}>
       <Pressable
         onPress={onToggleTheme}
-        accessibilityLabel="Toggle dark mode"
+        accessibilityLabel={T.toggleDarkMode}
         hitSlop={8}
         style={{ alignSelf: "center", padding: 6 }}
       >

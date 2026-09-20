@@ -24,6 +24,8 @@ export const translations: Record<Lang, Strings> = {
     cancelAnytime: "Cancel anytime in Google Play or the App Store.",
     termsLink: "Terms of Service", privacyLink: "Privacy Policy", eulaLink: "EULA",
     proNote: "Subscriptions keep the free tier free for everyone.",
+    cancel: "Cancel", deleteTitle: "Delete", deleteConfirm: "Delete this transcription?", deleteAction: "Delete",
+    errorTitle: "Error", permissionNeeded: "Permission needed", permissionRetry: "Please tap the record button one more time.", couldNotStartRecording: "Could not start recording.", couldNotStopRecording: "Could not stop recording.", couldNotImport: "Could not import file.", couldNotPlay: "Could not play audio.", noAudioTitle: "No audio", noAudioMessage: "Original recording not available.", transcriptionFailed: "Transcription failed.", supportedFiles: "Supported audio files: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Toggle dark mode",
   },
   es: {
     proSubtitle: "Transcripción ilimitada para usuarios avanzados.",
@@ -41,6 +43,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Transcripción sin título", noText: "No se devolvió texto", speaker: "Interlocutor",
     tapToExpand: "Toca para ampliar...", menuSupport: "Soporte", menuPrivacy: "Privacidad",
     menuTerms: "Términos", freeMinutes: "Minutos gratis", thisMonth: "este mes",
+    cancel: "Cancelar", deleteTitle: "Eliminar", deleteConfirm: "¿Eliminar esta transcripción?", deleteAction: "Eliminar",
+    errorTitle: "Error", permissionNeeded: "Permiso necesario", permissionRetry: "Vuelve a tocar el botón de grabar.", couldNotStartRecording: "No se pudo iniciar la grabación.", couldNotStopRecording: "No se pudo detener la grabación.", couldNotImport: "No se pudo importar el archivo.", couldNotPlay: "No se pudo reproducir el audio.", noAudioTitle: "Sin audio", noAudioMessage: "La grabación original no está disponible.", transcriptionFailed: "La transcripción falló.", supportedFiles: "Formatos de audio compatibles: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Cambiar modo oscuro",
   },
   pt: {
     proSubtitle: "Transcrição ilimitada para usuários avançados.",
@@ -58,6 +62,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Transcrição sem título", noText: "Nenhum texto retornado", speaker: "Orador",
     tapToExpand: "Toque para expandir...", menuSupport: "Suporte", menuPrivacy: "Privacidade",
     menuTerms: "Termos", freeMinutes: "Minutos grátis", thisMonth: "este mês",
+    cancel: "Cancelar", deleteTitle: "Excluir", deleteConfirm: "Excluir esta transcrição?", deleteAction: "Excluir",
+    errorTitle: "Erro", permissionNeeded: "Permissão necessária", permissionRetry: "Toque no botão de gravar mais uma vez.", couldNotStartRecording: "Não foi possível iniciar a gravação.", couldNotStopRecording: "Não foi possível parar a gravação.", couldNotImport: "Não foi possível importar o arquivo.", couldNotPlay: "Não foi possível reproduzir o áudio.", noAudioTitle: "Sem áudio", noAudioMessage: "A gravação original não está disponível.", transcriptionFailed: "Falha na transcrição.", supportedFiles: "Formatos de áudio compatíveis: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Alternar modo escuro",
   },
   hi: {
     proSubtitle: "पावर यूज़र्स के लिए असीमित ट्रांसक्रिप्शन।",
@@ -75,6 +81,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "बिना शीर्षक ट्रांसक्रिप्शन", noText: "कोई टेक्स्ट नहीं मिला", speaker: "वक्ता",
     tapToExpand: "विस्तार करने के लिए टैप करें...", menuSupport: "सहायता", menuPrivacy: "गोपनीयता",
     menuTerms: "नियम", freeMinutes: "मुफ्त मिनट", thisMonth: "इस महीने",
+    cancel: "रद्द करें", deleteTitle: "हटाएं", deleteConfirm: "इस ट्रांसक्रिप्शन को हटाएं?", deleteAction: "हटाएं",
+    errorTitle: "त्रुटि", permissionNeeded: "अनुमति आवश्यक", permissionRetry: "कृपया रिकॉर्ड बटन एक बार फिर दबाएं।", couldNotStartRecording: "रिकॉर्डिंग शुरू नहीं हो सकी।", couldNotStopRecording: "रिकॉर्डिंग रोकी नहीं जा सकी।", couldNotImport: "फ़ाइल आयात नहीं की जा सकी।", couldNotPlay: "ऑडियो चलाया नहीं जा सका।", noAudioTitle: "कोई ऑडियो नहीं", noAudioMessage: "मूल रिकॉर्डिंग उपलब्ध नहीं है।", transcriptionFailed: "ट्रांसक्रिप्शन विफल रहा।", supportedFiles: "समर्थित ऑडियो फ़ाइलें: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS।", toggleDarkMode: "डार्क मोड बदलें",
   },
   id: {
     proSubtitle: "Transkripsi tanpa batas untuk pengguna mahir.",
@@ -92,6 +100,7 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Transkrip tanpa judul", noText: "Tidak ada teks", speaker: "Pembicara",
     tapToExpand: "Ketuk untuk memperluas...", menuSupport: "Dukungan", menuPrivacy: "Privasi",
     menuTerms: "Ketentuan", freeMinutes: "Menit gratis", thisMonth: "bulan ini",
+    cancel: "Batal", deleteTitle: "Hapus", deleteConfirm: "Hapus transkripsi ini?", deleteAction: "Hapus",
   },
   ms: {
     proSubtitle: "Transkripsi tanpa had untuk pengguna mahir.",
@@ -109,6 +118,7 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Transkrip tanpa tajuk", noText: "Tiada teks", speaker: "Penceramah",
     tapToExpand: "Ketuk untuk kembangkan...", menuSupport: "Sokongan", menuPrivacy: "Privasi",
     menuTerms: "Terma", freeMinutes: "Minit percuma", thisMonth: "bulan ini",
+    cancel: "Batal", deleteTitle: "Padam", deleteConfirm: "Padam transkrip ini?", deleteAction: "Padam",
   },
   th: {
     proSubtitle: "ถอดเสียงไม่จำกัดสำหรับผู้ใช้ขั้นสูง",
@@ -126,6 +136,7 @@ export const translations: Record<Lang, Strings> = {
     untitled: "การถอดเสียงที่ไม่มีชื่อ", noText: "ไม่มีข้อความ", speaker: "ผู้พูด",
     tapToExpand: "แตะเพื่อขยาย...", menuSupport: "การสนับสนุน", menuPrivacy: "ความเป็นส่วนตัว",
     menuTerms: "ข้อกำหนด", freeMinutes: "นาทีฟรี", thisMonth: "เดือนนี้",
+    cancel: "ยกเลิก", deleteTitle: "ลบ", deleteConfirm: "ลบการถอดเสียงนี้หรือไม่?", deleteAction: "ลบ",
   },
   vi: {
     proSubtitle: "Chép lời không giới hạn cho người dùng nâng cao.",
@@ -143,6 +154,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Bản phiên âm chưa đặt tên", noText: "Không có văn bản", speaker: "Người nói",
     tapToExpand: "Chạm để mở rộng...", menuSupport: "Hỗ trợ", menuPrivacy: "Quyền riêng tư",
     menuTerms: "Điều khoản", freeMinutes: "Phút miễn phí", thisMonth: "tháng này",
+    cancel: "Hủy", deleteTitle: "Xóa", deleteConfirm: "Xóa bản phiên âm này?", deleteAction: "Xóa",
+    errorTitle: "Lỗi", permissionNeeded: "Cần quyền truy cập", permissionRetry: "Vui lòng nhấn nút ghi âm thêm một lần nữa.", couldNotStartRecording: "Không thể bắt đầu ghi âm.", couldNotStopRecording: "Không thể dừng ghi âm.", couldNotImport: "Không thể nhập tệp.", couldNotPlay: "Không thể phát âm thanh.", noAudioTitle: "Không có âm thanh", noAudioMessage: "Bản ghi gốc không khả dụng.", transcriptionFailed: "Phiên âm thất bại.", supportedFiles: "Định dạng âm thanh được hỗ trợ: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Chuyển chế độ tối",
   },
   tl: {
     proSubtitle: "Walang limitasyong transkripsyon para sa mga power user.",
@@ -160,6 +173,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Transkripsyon na walang pamagat", noText: "Walang tekstong ibinalik", speaker: "Nagsasalita",
     tapToExpand: "I-tap para palawakin...", menuSupport: "Suporta", menuPrivacy: "Privacy",
     menuTerms: "Terms", freeMinutes: "Libreng minuto", thisMonth: "ngayong buwan",
+    cancel: "Kanselahin", deleteTitle: "Tanggalin", deleteConfirm: "Tanggalin ang transkripsyon na ito?", deleteAction: "Tanggalin",
+    errorTitle: "Error", permissionNeeded: "Kailangan ng pahintulot", permissionRetry: "Paki-tap ang record button muli.", couldNotStartRecording: "Hindi masimulan ang pag-record.", couldNotStopRecording: "Hindi mapatigil ang pag-record.", couldNotImport: "Hindi ma-import ang file.", couldNotPlay: "Hindi ma-play ang audio.", noAudioTitle: "Walang audio", noAudioMessage: "Hindi available ang orihinal na recording.", transcriptionFailed: "Nabigo ang transkripsyon.", supportedFiles: "Mga sinusuportahang audio file: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "I-toggle ang dark mode",
   },
   de: {
     proSubtitle: "Unbegrenzte Transkription für Power-User.",
@@ -177,6 +192,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Unbenannte Transkription", noText: "Kein Text zurückgegeben", speaker: "Sprecher",
     tapToExpand: "Zum Erweitern tippen...", menuSupport: "Support", menuPrivacy: "Datenschutz",
     menuTerms: "Nutzungsbedingungen", freeMinutes: "Kostenlose Minuten", thisMonth: "diesen Monat",
+    cancel: "Abbrechen", deleteTitle: "Löschen", deleteConfirm: "Diese Transkription löschen?", deleteAction: "Löschen",
+    errorTitle: "Fehler", permissionNeeded: "Berechtigung erforderlich", permissionRetry: "Tippen Sie erneut auf die Aufnahmetaste.", couldNotStartRecording: "Aufnahme konnte nicht gestartet werden.", couldNotStopRecording: "Aufnahme konnte nicht gestoppt werden.", couldNotImport: "Datei konnte nicht importiert werden.", couldNotPlay: "Audio konnte nicht abgespielt werden.", noAudioTitle: "Kein Audio", noAudioMessage: "Originalaufnahme nicht verfügbar.", transcriptionFailed: "Transkription fehlgeschlagen.", supportedFiles: "Unterstützte Audiodateien: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Dunkelmodus umschalten",
   },
   fr: {
     proSubtitle: "Transcription illimitée pour les utilisateurs avancés.",
@@ -194,6 +211,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Transcription sans titre", noText: "Aucun texte retourné", speaker: "Intervenant",
     tapToExpand: "Touchez pour développer...", menuSupport: "Assistance", menuPrivacy: "Confidentialité",
     menuTerms: "Conditions", freeMinutes: "Minutes gratuites", thisMonth: "ce mois-ci",
+    cancel: "Annuler", deleteTitle: "Supprimer", deleteConfirm: "Supprimer cette transcription ?", deleteAction: "Supprimer",
+    errorTitle: "Erreur", permissionNeeded: "Autorisation requise", permissionRetry: "Appuyez encore une fois sur le bouton d'enregistrement.", couldNotStartRecording: "Impossible de démarrer l'enregistrement.", couldNotStopRecording: "Impossible d'arrêter l'enregistrement.", couldNotImport: "Impossible d'importer le fichier.", couldNotPlay: "Impossible de lire l'audio.", noAudioTitle: "Aucun audio", noAudioMessage: "Enregistrement d'origine indisponible.", transcriptionFailed: "Échec de la transcription.", supportedFiles: "Formats audio pris en charge : WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Basculer le mode sombre",
   },
   it: {
     proSubtitle: "Trascrizione illimitata per utenti esperti.",
@@ -211,6 +230,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Trascrizione senza titolo", noText: "Nessun testo restituito", speaker: "Relatore",
     tapToExpand: "Tocca per espandere...", menuSupport: "Supporto", menuPrivacy: "Privacy",
     menuTerms: "Termini", freeMinutes: "Minuti gratis", thisMonth: "questo mese",
+    cancel: "Annulla", deleteTitle: "Elimina", deleteConfirm: "Eliminare questa trascrizione?", deleteAction: "Elimina",
+    errorTitle: "Errore", permissionNeeded: "Autorizzazione necessaria", permissionRetry: "Tocca di nuovo il pulsante di registrazione.", couldNotStartRecording: "Impossibile avviare la registrazione.", couldNotStopRecording: "Impossibile fermare la registrazione.", couldNotImport: "Impossibile importare il file.", couldNotPlay: "Impossibile riprodurre l'audio.", noAudioTitle: "Nessun audio", noAudioMessage: "Registrazione originale non disponibile.", transcriptionFailed: "Trascrizione non riuscita.", supportedFiles: "File audio supportati: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Attiva/disattiva modalità scura",
   },
   nl: {
     proSubtitle: "Onbeperkte transcriptie voor power users.",
@@ -228,6 +249,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Transcript zonder titel", noText: "Geen tekst geretourneerd", speaker: "Spreker",
     tapToExpand: "Tik om uit te vouwen...", menuSupport: "Ondersteuning", menuPrivacy: "Privacy",
     menuTerms: "Voorwaarden", freeMinutes: "Gratis minuten", thisMonth: "deze maand",
+    cancel: "Annuleren", deleteTitle: "Verwijderen", deleteConfirm: "Deze transcriptie verwijderen?", deleteAction: "Verwijderen",
+    errorTitle: "Fout", permissionNeeded: "Toestemming vereist", permissionRetry: "Tik nogmaals op de opnameknop.", couldNotStartRecording: "Opname kon niet worden gestart.", couldNotStopRecording: "Opname kon niet worden gestopt.", couldNotImport: "Bestand kon niet worden geïmporteerd.", couldNotPlay: "Audio kon niet worden afgespeeld.", noAudioTitle: "Geen audio", noAudioMessage: "Originele opname niet beschikbaar.", transcriptionFailed: "Transcriptie mislukt.", supportedFiles: "Ondersteunde audiobestanden: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Donkere modus wisselen",
   },
   pl: {
     proSubtitle: "Nieograniczona transkrypcja dla zaawansowanych użytkowników.",
@@ -245,6 +268,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Transkrypcja bez tytułu", noText: "Brak zwróconego tekstu", speaker: "Mówca",
     tapToExpand: "Dotknij, aby rozwinąć...", menuSupport: "Wsparcie", menuPrivacy: "Prywatność",
     menuTerms: "Warunki", freeMinutes: "Darmowe minuty", thisMonth: "w tym miesiącu",
+    cancel: "Anuluj", deleteTitle: "Usuń", deleteConfirm: "Usunąć tę transkrypcję?", deleteAction: "Usuń",
+    errorTitle: "Błąd", permissionNeeded: "Wymagane uprawnienie", permissionRetry: "Dotknij ponownie przycisku nagrywania.", couldNotStartRecording: "Nie udało się rozpocząć nagrywania.", couldNotStopRecording: "Nie udało się zatrzymać nagrywania.", couldNotImport: "Nie udało się zaimportować pliku.", couldNotPlay: "Nie udało się odtworzyć dźwięku.", noAudioTitle: "Brak dźwięku", noAudioMessage: "Oryginalne nagranie jest niedostępne.", transcriptionFailed: "Transkrypcja nie powiodła się.", supportedFiles: "Obsługiwane pliki audio: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Przełącz tryb ciemny",
   },
   sv: {
     proSubtitle: "Obegränsad transkribering för avancerade användare.",
@@ -262,6 +287,7 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Transkription utan titel", noText: "Ingen text returnerad", speaker: "Talare",
     tapToExpand: "Tryck för att expandera...", menuSupport: "Support", menuPrivacy: "Integritet",
     menuTerms: "Villkor", freeMinutes: "Gratis minuter", thisMonth: "den här månaden",
+    cancel: "Avbryt", deleteTitle: "Ta bort", deleteConfirm: "Ta bort denna transkription?", deleteAction: "Ta bort",
   },
   no: {
     proSubtitle: "Ubegrenset transkripsjon for avanserte brukere.",
@@ -279,6 +305,7 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Transkripsjon uten tittel", noText: "Ingen tekst returnert", speaker: "Taler",
     tapToExpand: "Trykk for å utvide...", menuSupport: "Støtte", menuPrivacy: "Personvern",
     menuTerms: "Vilkår", freeMinutes: "Gratis minutter", thisMonth: "denne måneden",
+    cancel: "Avbryt", deleteTitle: "Slett", deleteConfirm: "Slette denne transkripsjonen?", deleteAction: "Slett",
   },
   da: {
     proSubtitle: "Ubegrænset transskription til avancerede brugere.",
@@ -296,6 +323,7 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Transskription uden titel", noText: "Ingen tekst returneret", speaker: "Taler",
     tapToExpand: "Tryk for at udvide...", menuSupport: "Support", menuPrivacy: "Privatliv",
     menuTerms: "Vilkår", freeMinutes: "Gratis minutter", thisMonth: "denne måned",
+    cancel: "Annuller", deleteTitle: "Slet", deleteConfirm: "Slet denne transskription?", deleteAction: "Slet",
   },
   fi: {
     proSubtitle: "Rajoittamaton litterointi teholukijoille.",
@@ -313,6 +341,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Nimetön kirjoitus", noText: "Ei palautettua tekstiä", speaker: "Puhuja",
     tapToExpand: "Laajenna napauttamalla...", menuSupport: "Tuki", menuPrivacy: "Tietosuoja",
     menuTerms: "Ehdot", freeMinutes: "Ilmaiset minuutit", thisMonth: "tässä kuussa",
+    cancel: "Peruuta", deleteTitle: "Poista", deleteConfirm: "Poistetaanko tämä litterointi?", deleteAction: "Poista",
+    errorTitle: "Virhe", permissionNeeded: "Lupa tarvitaan", permissionRetry: "Napauta tallennuspainiketta vielä kerran.", couldNotStartRecording: "Tallennusta ei voitu aloittaa.", couldNotStopRecording: "Tallennusta ei voitu lopettaa.", couldNotImport: "Tiedostoa ei voitu tuoda.", couldNotPlay: "Ääntä ei voitu toistaa.", noAudioTitle: "Ei ääntä", noAudioMessage: "Alkuperäinen tallenne ei ole saatavilla.", transcriptionFailed: "Litterointi epäonnistui.", supportedFiles: "Tuetut äänitiedostot: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Vaihda tumma tila",
   },
   cs: {
     proSubtitle: "Neomezený přepis pro náročné uživatele.",
@@ -330,6 +360,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Přepis bez názvu", noText: "Žádný vrácený text", speaker: "Mluvčí",
     tapToExpand: "Klepnutím rozbalíte...", menuSupport: "Podpora", menuPrivacy: "Soukromí",
     menuTerms: "Podmínky", freeMinutes: "Volné minuty", thisMonth: "tento měsíc",
+    cancel: "Zrušit", deleteTitle: "Smazat", deleteConfirm: "Smazat tento přepis?", deleteAction: "Smazat",
+    errorTitle: "Chyba", permissionNeeded: "Vyžadováno oprávnění", permissionRetry: "Klepněte ještě jednou na tlačítko nahrávání.", couldNotStartRecording: "Nahrávání se nepodařilo spustit.", couldNotStopRecording: "Nahrávání se nepodařilo zastavit.", couldNotImport: "Soubor se nepodařilo importovat.", couldNotPlay: "Zvuk se nepodařilo přehrát.", noAudioTitle: "Žádný zvuk", noAudioMessage: "Původní nahrávka není k dispozici.", transcriptionFailed: "Přepis se nezdařil.", supportedFiles: "Podporované zvukové soubory: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Přepnout tmavý režim",
   },
   el: {
     proSubtitle: "Απεριόριστη μεταγραφή για απαιτητικούς χρήστες.",
@@ -347,6 +379,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Μεταγραφή χωρίς τίτλο", noText: "Δεν επιστράφηκε κείμενο", speaker: "Ομιλητής",
     tapToExpand: "Πατήστε για επέκταση...", menuSupport: "Υποστήριξη", menuPrivacy: "Απόρρητο",
     menuTerms: "Όροι", freeMinutes: "Δωρεάν λεπτά", thisMonth: "αυτόν τον μήνα",
+    cancel: "Άκυρο", deleteTitle: "Διαγραφή", deleteConfirm: "Διαγραφή αυτής της μεταγραφής;", deleteAction: "Διαγραφή",
+    errorTitle: "Σφάλμα", permissionNeeded: "Απαιτείται άδεια", permissionRetry: "Πατήστε ξανά το κουμπί εγγραφής.", couldNotStartRecording: "Δεν ήταν δυνατή η έναρξη της εγγραφής.", couldNotStopRecording: "Δεν ήταν δυνατή η διακοπή της εγγραφής.", couldNotImport: "Δεν ήταν δυνατή η εισαγωγή του αρχείου.", couldNotPlay: "Δεν ήταν δυνατή η αναπαραγωγή του ήχου.", noAudioTitle: "Χωρίς ήχο", noAudioMessage: "Η αρχική εγγραφή δεν είναι διαθέσιμη.", transcriptionFailed: "Η μεταγραφή απέτυχε.", supportedFiles: "Υποστηριζόμενα αρχεία ήχου: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Εναλλαγή σκοτεινής λειτουργίας",
   },
   ro: {
     proSubtitle: "Transcriere nelimitată pentru utilizatori avansați.",
@@ -364,6 +398,7 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Transcriere fără titlu", noText: "Niciun text returnat", speaker: "Vorbitor",
     tapToExpand: "Atingeți pentru a extinde...", menuSupport: "Asistență", menuPrivacy: "Confidențialitate",
     menuTerms: "Termeni", freeMinutes: "Minute gratuite", thisMonth: "luna aceasta",
+    cancel: "Anulează", deleteTitle: "Șterge", deleteConfirm: "Ștergi această transcriere?", deleteAction: "Șterge",
   },
   hu: {
     proSubtitle: "Korlátlan átírás haladó felhasználóknak.",
@@ -381,6 +416,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Cím nélküli átirat", noText: "Nincs visszaadott szöveg", speaker: "Beszélő",
     tapToExpand: "Érintse meg a kibontáshoz...", menuSupport: "Támogatás", menuPrivacy: "Adatvédelem",
     menuTerms: "Feltételek", freeMinutes: "Ingyenes percek", thisMonth: "ebben a hónapban",
+    cancel: "Mégse", deleteTitle: "Törlés", deleteConfirm: "Törli ezt az átiratot?", deleteAction: "Törlés",
+    errorTitle: "Hiba", permissionNeeded: "Engedély szükséges", permissionRetry: "Érintse meg még egyszer a felvétel gombot.", couldNotStartRecording: "Nem sikerült elindítani a felvételt.", couldNotStopRecording: "Nem sikerült leállítani a felvételt.", couldNotImport: "Nem sikerült importálni a fájlt.", couldNotPlay: "Nem sikerült lejátszani a hangot.", noAudioTitle: "Nincs hang", noAudioMessage: "Az eredeti felvétel nem érhető el.", transcriptionFailed: "Az átírás sikertelen.", supportedFiles: "Támogatott hangfájlok: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Sötét mód váltása",
   },
   uk: {
     proSubtitle: "Необмежена транскрипція для досвідчених користувачів.",
@@ -398,6 +435,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Транскрипт без назви", noText: "Немає тексту", speaker: "Говорящий",
     tapToExpand: "Натисніть, щоб розгорнути...", menuSupport: "Підтримка", menuPrivacy: "Конфіденційність",
     menuTerms: "Умови", freeMinutes: "Безкоштовні хвилини", thisMonth: "цього місяця",
+    cancel: "Скасувати", deleteTitle: "Видалити", deleteConfirm: "Видалити цей транскрипт?", deleteAction: "Видалити",
+    errorTitle: "Помилка", permissionNeeded: "Потрібен дозвіл", permissionRetry: "Натисніть кнопку запису ще раз.", couldNotStartRecording: "Не вдалося почати запис.", couldNotStopRecording: "Не вдалося зупинити запис.", couldNotImport: "Не вдалося імпортувати файл.", couldNotPlay: "Не вдалося відтворити аудіо.", noAudioTitle: "Немає аудіо", noAudioMessage: "Оригінальний запис недоступний.", transcriptionFailed: "Транскрипція не вдалася.", supportedFiles: "Підтримувані аудіофайли: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Перемкнути темний режим",
   },
   ru: {
     proSubtitle: "Неограниченная транскрипция для опытных пользователей.",
@@ -415,6 +454,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Транскрипт без названия", noText: "Нет текста", speaker: "Говорящий",
     tapToExpand: "Нажмите, чтобы развернуть...", menuSupport: "Поддержка", menuPrivacy: "Конфиденциальность",
     menuTerms: "Условия", freeMinutes: "Бесплатные минуты", thisMonth: "в этом месяце",
+    cancel: "Отмена", deleteTitle: "Удалить", deleteConfirm: "Удалить эту транскрипцию?", deleteAction: "Удалить",
+    errorTitle: "Ошибка", permissionNeeded: "Требуется разрешение", permissionRetry: "Нажмите кнопку записи ещё раз.", couldNotStartRecording: "Не удалось начать запись.", couldNotStopRecording: "Не удалось остановить запись.", couldNotImport: "Не удалось импортировать файл.", couldNotPlay: "Не удалось воспроизвести аудио.", noAudioTitle: "Нет аудио", noAudioMessage: "Исходная запись недоступна.", transcriptionFailed: "Не удалось выполнить транскрипцию.", supportedFiles: "Поддерживаемые аудиофайлы: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Переключить тёмную тему",
   },
   ar: {
     proSubtitle: "نسخ غير محدود للمستخدمين المتقدمين.",
@@ -432,6 +473,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "تفريغ بدون عنوان", noText: "لا يوجد نص", speaker: "المتحدث",
     tapToExpand: "اضغط للتوسيع...", menuSupport: "الدعم", menuPrivacy: "الخصوصية",
     menuTerms: "الشروط", freeMinutes: "دقائق مجانية", thisMonth: "هذا الشهر",
+    cancel: "إلغاء", deleteTitle: "حذف", deleteConfirm: "حذف هذا التفريغ؟", deleteAction: "حذف",
+    errorTitle: "خطأ", permissionNeeded: "الإذن مطلوب", permissionRetry: "اضغط على زر التسجيل مرة أخرى.", couldNotStartRecording: "تعذّر بدء التسجيل.", couldNotStopRecording: "تعذّر إيقاف التسجيل.", couldNotImport: "تعذّر استيراد الملف.", couldNotPlay: "تعذّر تشغيل الصوت.", noAudioTitle: "لا يوجد صوت", noAudioMessage: "التسجيل الأصلي غير متاح.", transcriptionFailed: "فشل التفريغ.", supportedFiles: "ملفات الصوت المدعومة: WAV، MP3، M4A، AAC، WEBM، FLAC، OGG/OPUS.", toggleDarkMode: "تبديل الوضع الداكن",
   },
   bn: {
     proSubtitle: "পাওয়ার ব্যবহারকারীদের জন্য সীমাহীন প্রতিলিপি।",
@@ -449,6 +492,7 @@ export const translations: Record<Lang, Strings> = {
     untitled: "শিরোনামহীন ট্রান্সক্রিপ্ট", noText: "কোন পাঠ্য নেই", speaker: "বক্তা",
     tapToExpand: "বিস্তার করতে ট্যাপ করুন...", menuSupport: "সহায়তা", menuPrivacy: "গোপনীয়তা",
     menuTerms: "শর্তাবলী", freeMinutes: "ফ্রি মিনিট", thisMonth: "এই মাসে",
+    cancel: "বাতিল", deleteTitle: "মুছুন", deleteConfirm: "এই প্রতিলিপি মুছবেন?", deleteAction: "মুছুন",
   },
   ur: {
     proSubtitle: "پاور صارفین کے لیے لامحدود نقل۔",
@@ -466,6 +510,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "بلا عنوان نقلی", noText: "کوئی متن نہیں", speaker: "مقرر",
     tapToExpand: "پھیلانے کے لیے تھپتھپائیں...", menuSupport: "سپورٹ", menuPrivacy: "رازداری",
     menuTerms: "شرائط", freeMinutes: "مفت منٹ", thisMonth: "اس ماہ",
+    cancel: "منسوخ", deleteTitle: "حذف کریں", deleteConfirm: "یہ نقل حذف کریں؟", deleteAction: "حذف کریں",
+    errorTitle: "خرابی", permissionNeeded: "اجازت درکار ہے", permissionRetry: "ریکارڈ بٹن ایک بار پھر دبائیں۔", couldNotStartRecording: "ریکارڈنگ شروع نہیں ہو سکی۔", couldNotStopRecording: "ریکارڈنگ روکی نہیں جا سکی۔", couldNotImport: "فائل درآمد نہیں ہو سکی۔", couldNotPlay: "آڈیو چلائی نہیں جا سکی۔", noAudioTitle: "کوئی آڈیو نہیں", noAudioMessage: "اصل ریکارڈنگ دستیاب نہیں ہے۔", transcriptionFailed: "نقل ناکام رہی۔", supportedFiles: "معاون آڈیو فائلیں: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS۔", toggleDarkMode: "ڈارک موڈ تبدیل کریں",
   },
   mr: {
     proSubtitle: "प्रगत वापरकर्त्यांसाठी अमर्यादित ट्रान्सक्रिप्शन.",
@@ -483,6 +529,7 @@ export const translations: Record<Lang, Strings> = {
     untitled: "शीर्षक नसलेला उतारा", noText: "मजकूर नाही", speaker: "वक्ता",
     tapToExpand: "विस्तारण्यासाठी टॅप करा...", menuSupport: "मदत", menuPrivacy: "गोपनीयता",
     menuTerms: "अटी", freeMinutes: "विनामूल्य मिनिटे", thisMonth: "या महिन्यात",
+    cancel: "रद्द करा", deleteTitle: "हटवा", deleteConfirm: "हे लिप्यंतर हटवायचे?", deleteAction: "हटवा",
   },
   te: {
     proSubtitle: "పవర్ వినియోగదారుల కోసం అపరిమిత ట్రాన్స్క్రిప్షన్.",
@@ -500,6 +547,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "శీర్షిక లేని ట్రాన్స్క్రిప్ట్", noText: "టెక్స్ట్ లేదు", speaker: "మాట్లాడే వ్యక్తి",
     tapToExpand: "విస్తరించడానికి నొక్కండి...", menuSupport: "మద్దతు", menuPrivacy: "గోప్యత",
     menuTerms: "నిబంధనలు", freeMinutes: "ఉచిత నిమిషాలు", thisMonth: "ఈ నెలలో",
+    cancel: "రద్దు", deleteTitle: "తొలగించు", deleteConfirm: "ఈ ట్రాన్స్క్రిప్ట్ను తొలగించాలా?", deleteAction: "తొలగించు",
+    errorTitle: "లోపం", permissionNeeded: "అనుమతి అవసరం", permissionRetry: "రికార్డ్ బటన్ను మరోసారి నొక్కండి.", couldNotStartRecording: "రికార్డింగ్ ప్రారంభించలేకపోయాం.", couldNotStopRecording: "రికార్డింగ్ ఆపలేకపోయాం.", couldNotImport: "ఫైల్ను దిగుమతి చేయలేకపోయాం.", couldNotPlay: "ఆడియోను ప్లే చేయలేకపోయాం.", noAudioTitle: "ఆడియో లేదు", noAudioMessage: "అసలు రికార్డింగ్ అందుబాటులో లేదు.", transcriptionFailed: "ట్రాన్స్క్రిప్షన్ విఫలమైంది.", supportedFiles: "మద్దతు ఉన్న ఆడియో ఫైళ్లు: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "డార్క్ మోడ్ మార్చు",
   },
   ta: {
     proSubtitle: "பவர் பயனர்களுக்கு வரம்பற்ற டிரான்ஸ்கிரிப்ஷன்.",
@@ -517,6 +566,7 @@ export const translations: Record<Lang, Strings> = {
     untitled: "தலைப்பு இல்லாத பிரதி", noText: "உரை இல்லை", speaker: "பேச்சாளர்",
     tapToExpand: "விரிவாக்க தட்டவும்...", menuSupport: "ஆதரவு", menuPrivacy: "தனியுரிமை",
     menuTerms: "விதிமுறைகள்", freeMinutes: "இலவச நிமிடங்கள்", thisMonth: "இந்த மாதம்",
+    cancel: "ரத்து", deleteTitle: "நீக்கு", deleteConfirm: "இந்த பிரதியை நீக்கவா?", deleteAction: "நீக்கு",
   },
   fa: {
     proSubtitle: "رونویسی نامحدود برای کاربران حرفه‌ای.",
@@ -534,6 +584,7 @@ export const translations: Record<Lang, Strings> = {
     untitled: "رونوشت بدون عنوان", noText: "متنی برگردانده نشد", speaker: "گوینده",
     tapToExpand: "برای گسترش ضربه بزنید...", menuSupport: "پشتیبانی", menuPrivacy: "حریم خصوصی",
     menuTerms: "شرایط", freeMinutes: "دقیقه رایگان", thisMonth: "این ماه",
+    cancel: "لغو", deleteTitle: "حذف", deleteConfirm: "این رونوشت حذف شود؟", deleteAction: "حذف",
   },
   tr: {
     proSubtitle: "Güç kullanıcıları için sınırsız deşifre.",
@@ -551,6 +602,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Başlıksız döküm", noText: "Metin döndürülmedi", speaker: "Konuşmacı",
     tapToExpand: "Genişletmek için dokunun...", menuSupport: "Destek", menuPrivacy: "Gizlilik",
     menuTerms: "Şartlar", freeMinutes: "Ücretsiz dakika", thisMonth: "bu ay",
+    cancel: "İptal", deleteTitle: "Sil", deleteConfirm: "Bu döküm silinsin mi?", deleteAction: "Sil",
+    errorTitle: "Hata", permissionNeeded: "İzin gerekli", permissionRetry: "Kayıt düğmesine bir kez daha dokunun.", couldNotStartRecording: "Kayıt başlatılamadı.", couldNotStopRecording: "Kayıt durdurulamadı.", couldNotImport: "Dosya içe aktarılamadı.", couldNotPlay: "Ses çalınamadı.", noAudioTitle: "Ses yok", noAudioMessage: "Orijinal kayıt mevcut değil.", transcriptionFailed: "Deşifre başarısız oldu.", supportedFiles: "Desteklenen ses dosyaları: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Karanlık modu değiştir",
   },
   ko: {
     proSubtitle: "파워 유저를 위한 무제한 전사.",
@@ -568,6 +621,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "제목 없는 대본", noText: "텍스트가 없음", speaker: "화자",
     tapToExpand: "펼치려면 탭하세요...", menuSupport: "지원", menuPrivacy: "개인정보",
     menuTerms: "약관", freeMinutes: "무료 분", thisMonth: "이번 달",
+    cancel: "취소", deleteTitle: "삭제", deleteConfirm: "이 대본을 삭제할까요?", deleteAction: "삭제",
+    errorTitle: "오류", permissionNeeded: "권한이 필요합니다", permissionRetry: "녹음 버튼을 한 번 더 누르세요.", couldNotStartRecording: "녹음을 시작할 수 없습니다.", couldNotStopRecording: "녹음을 중지할 수 없습니다.", couldNotImport: "파일을 가져올 수 없습니다.", couldNotPlay: "오디오를 재생할 수 없습니다.", noAudioTitle: "오디오 없음", noAudioMessage: "원본 녹음을 사용할 수 없습니다.", transcriptionFailed: "전사에 실패했습니다.", supportedFiles: "지원되는 오디오 파일: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "다크 모드 전환",
   },
   ja: {
     proSubtitle: "パワーユーザー向けの無制限文字起こし。",
@@ -585,6 +640,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "無題の書き起こし", noText: "テキストがありません", speaker: "話者",
     tapToExpand: "タップして展開...", menuSupport: "サポート", menuPrivacy: "プライバシー",
     menuTerms: "利用規約", freeMinutes: "無料分", thisMonth: "今月",
+    cancel: "キャンセル", deleteTitle: "削除", deleteConfirm: "この書き起こしを削除しますか？", deleteAction: "削除",
+    errorTitle: "エラー", permissionNeeded: "権限が必要です", permissionRetry: "録音ボタンをもう一度タップしてください。", couldNotStartRecording: "録音を開始できませんでした。", couldNotStopRecording: "録音を停止できませんでした。", couldNotImport: "ファイルをインポートできませんでした。", couldNotPlay: "音声を再生できませんでした。", noAudioTitle: "音声がありません", noAudioMessage: "元の録音は利用できません。", transcriptionFailed: "書き起こしに失敗しました。", supportedFiles: "対応する音声ファイル: WAV、MP3、M4A、AAC、WEBM、FLAC、OGG/OPUS。", toggleDarkMode: "ダークモードを切り替え",
   },
   zh: {
     proSubtitle: "为高级用户提供无限转录。",
@@ -602,6 +659,8 @@ export const translations: Record<Lang, Strings> = {
     untitled: "未命名转录", noText: "无文本返回", speaker: "说话人",
     tapToExpand: "点击展开...", menuSupport: "支持", menuPrivacy: "隐私",
     menuTerms: "条款", freeMinutes: "免费分钟", thisMonth: "本月",
+    cancel: "取消", deleteTitle: "删除", deleteConfirm: "删除此转录？", deleteAction: "删除",
+    errorTitle: "错误", permissionNeeded: "需要权限", permissionRetry: "请再次点击录音按钮。", couldNotStartRecording: "无法开始录音。", couldNotStopRecording: "无法停止录音。", couldNotImport: "无法导入文件。", couldNotPlay: "无法播放音频。", noAudioTitle: "无音频", noAudioMessage: "原始录音不可用。", transcriptionFailed: "转录失败。", supportedFiles: "支持的音频文件：WAV、MP3、M4A、AAC、WEBM、FLAC、OGG/OPUS。", toggleDarkMode: "切换深色模式",
   },
   ha: {
     proSubtitle: "Rubutun magana mara iyaka ga ƙwararrun masu amfani.",
@@ -619,15 +678,34 @@ export const translations: Record<Lang, Strings> = {
     untitled: "Fassara ba tare da suna ba", noText: "Babu rubutu", speaker: "Mai magana",
     tapToExpand: "Danna don faɗaɗa...", menuSupport: "Tallafi", menuPrivacy: "Sirri",
     menuTerms: "Sharuɗɗa", freeMinutes: "Mintoci kyauta", thisMonth: "wannan watan",
+    cancel: "Soke", deleteTitle: "Share", deleteConfirm: "Share wannan fassarar?", deleteAction: "Share",
   },
 };
 
 export const DEFAULT_LANG: Lang = "en";
 const LANG_KEY = "freesurf-app-lang";
 
-/** Return the language code if we have a translation for it, otherwise English. */
+// Languages we translate but do NOT offer in the Transcriber: Whisper's transcription
+// quality is currently too poor for them, and the app uses the UI language as the
+// transcription language. Re-enable once accuracy improves.
+export const UNSUPPORTED: ReadonlySet<string> = new Set([
+  "bn", // Bengali
+  "da", // Danish
+  "id", // Indonesian
+  "ms", // Malay
+  "mr", // Marathi
+  "no", // Norwegian
+  "fa", // Persian
+  "ro", // Romanian
+  "sv", // Swedish
+  "ta", // Tamil
+  "th", // Thai
+  "ha", // Hausa
+]);
+
+/** Return the language code if we translate and support it, otherwise English. */
 export function normalizeLang(code?: string | null): Lang {
-  if (code && translations[code]) return code;
+  if (code && translations[code] && !UNSUPPORTED.has(code)) return code;
   return DEFAULT_LANG;
 }
 
