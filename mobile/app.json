@@ -72,7 +72,8 @@
         }
       ],
       "expo-web-browser",
-      "expo-localization"
+      "expo-localization",
+      "react-native-appsflyer"
     ]
   }
 }

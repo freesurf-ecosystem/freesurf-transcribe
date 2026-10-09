@@ -8,9 +8,11 @@ import { PaperProvider, MD3DarkTheme, MD3LightTheme } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./lib/supabase";
 import { REVENUECAT_ANDROID_KEY } from "./lib/config";
+import { APPSFLYER_DEV_KEY } from "./lib/config";
 import { getDeviceId } from "./lib/device";
 import { recordConsent } from "./lib/consent";
 import Purchases from "react-native-purchases";
+import appsFlyer from "react-native-appsflyer";
 import TranscriberScreen from "./screens/TranscriberScreen";
 import AuthScreen from "./screens/AuthScreen";
 import AboutScreen from "./screens/AboutScreen";
@@ -75,6 +77,24 @@ export default function App() {
 
   useEffect(() => {
     AsyncStorage.getItem(AI_CONSENT_KEY).then((v) => setAiConsent(v === "true")).catch(() => setAiConsent(false));
+  }, []);
+
+  // Initialize AppsFlyer (install attribution / ad-fraud detection) at launch, before any
+  // gated screens render. Android-only for now.
+  useEffect(() => {
+    if (Platform.OS !== "android" || !APPSFLYER_DEV_KEY || APPSFLYER_DEV_KEY.startsWith("YOUR_")) return;
+    try {
+      appsFlyer.init({ devKey: APPSFLYER_DEV_KEY }).catch((err: any) => {
+        console.log("[AppsFlyer] init error:", err?.message || err);
+      });
+      appsFlyer.registerSessionReadyListener(() => {
+        appsFlyer.start().catch((err: any) => {
+          console.log("[AppsFlyer] start error:", err?.message || err);
+        });
+      });
+    } catch (e: any) {
+      console.log("[AppsFlyer] setup error:", e?.message || e);
+    }
   }, []);
 
   const agreeAiConsent = async () => {
