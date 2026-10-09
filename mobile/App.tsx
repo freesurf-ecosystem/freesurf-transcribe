@@ -87,10 +87,14 @@ export default function App() {
       appsFlyer.init({ devKey: APPSFLYER_DEV_KEY }).catch((err: any) => {
         console.log("[AppsFlyer] init error:", err?.message || err);
       });
-      appsFlyer.registerSessionReadyListener(() => {
-        appsFlyer.start().catch((err: any) => {
+      appsFlyer.registerSessionReadyListener(async () => {
+        try {
+          await appsFlyer.start();
+          const uid = await appsFlyer.getAppsFlyerUID();
+          console.log("[AppsFlyer] AppsFlyer UID:", uid);
+        } catch (err: any) {
           console.log("[AppsFlyer] start error:", err?.message || err);
-        });
+        }
       });
     } catch (e: any) {
       console.log("[AppsFlyer] setup error:", e?.message || e);
