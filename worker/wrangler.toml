@@ -20,3 +20,23 @@ USAGE_METERING = "off"
 #   POD_URL                     - fallback RunPod pod URL (only used if TOGETHER_API_KEY is unset)
 #   SUPABASE_SECRET_KEY         - server-side key for reading/writing the usage table
 #   USAGE_METERING              - "on" enables the anonymous monthly meter (also a var above)
+
+# Observability — persist Worker logs so console.* output is visible in the dashboard.
+[observability]
+enabled = false
+head_sampling_rate = 1
+redact_query_string = false
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[observability.traces]
+enabled = false
+head_sampling_rate = 1
+persist = true
+
+[observability.issues]
+enabled = true
