@@ -15,7 +15,7 @@
     ],
     "android": {
       "package": "tools.freesurf.transcriber",
-      "versionCode": 16
+      "versionCode": 17
     },
     "ios": {
       "bundleIdentifier": "tools.freesurf.transcriber",
@@ -67,7 +67,9 @@
             "targetSdkVersion": 36,
             "buildToolsVersion": "36.0.0",
             "ndkVersion": "27.1.12297006",
-            "useLegacyPackaging": false
+            "useLegacyPackaging": false,
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
           }
         }
       ],
