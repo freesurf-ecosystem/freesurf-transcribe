@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
@@ -74,6 +74,7 @@ export default function App() {
   const [isDark, setIsDark] = useState(false);
   const [aiConsent, setAiConsent] = useState<boolean | null>(null);
   const { loaded: langLoaded, chosen: langChosen, setLanguage } = useAppLanguage();
+  const onboardingEventSent = useRef(false);
 
   useEffect(() => {
     AsyncStorage.getItem(AI_CONSENT_KEY).then((v) => setAiConsent(v === "true")).catch(() => setAiConsent(false));
@@ -88,6 +89,9 @@ export default function App() {
         { devKey: APPSFLYER_DEV_KEY, isDebug: false },
         (result: any) => {
           console.log("[AppsFlyer] init success:", result);
+          getDeviceId().then((deviceId) => {
+            appsFlyer.setCustomerUserId(deviceId);
+          }).catch(() => {});
           appsFlyer.getAppsFlyerUID((err: any, uid: string) => {
             if (err) console.log("[AppsFlyer] UID error:", err);
             else console.log("[AppsFlyer] AppsFlyer UID:", uid);
@@ -101,6 +105,18 @@ export default function App() {
       console.log("[AppsFlyer] setup error:", e?.message || e);
     }
   }, []);
+
+  // Fire the onboarding-complete event once the user has passed both gates
+  // (language chosen + AI consent accepted) and reached the main screen.
+  useEffect(() => {
+    if (Platform.OS !== "android" || !langChosen || !aiConsent || onboardingEventSent.current) return;
+    onboardingEventSent.current = true;
+    try {
+      appsFlyer.logEvent("af_complete_registration", {});
+    } catch (e: any) {
+      console.log("[AppsFlyer] onboarding event error:", e?.message || e);
+    }
+  }, [langChosen, aiConsent]);
 
   const agreeAiConsent = async () => {
     setAiConsent(true);

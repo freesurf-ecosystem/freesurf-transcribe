@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   View, ScrollView, Alert, Share, Linking,
-  ActivityIndicator, TextInput, TouchableOpacity, Pressable,
+  ActivityIndicator, TextInput, TouchableOpacity, Pressable, Platform,
 } from "react-native";
 import {
   Text, Card, Button, Surface, useTheme, IconButton, Divider,
@@ -20,8 +20,10 @@ import { translationsFor, useAppLanguage } from "../i18n";
 
 import { WORKER_URL } from "../lib/config";
 import { getDeviceId } from "../lib/device";
+import appsFlyer from "react-native-appsflyer";
 const HISTORY_KEY = "freesurf-transcriber-history";
 const SPEAKER_COLORS = ["#5b8cff", "#78e6c4", "#f0a060", "#c084fc", "#60c0f0"];
+let firstTranscriptionSent = false;
 
 type Props = { isLoggedIn: boolean; onSignIn: () => void; navigation?: any; isDark?: boolean; onToggleTheme?: () => void; };
 
@@ -110,6 +112,16 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       if (data.error) throw new Error(data.error);
 
       setResult(data);
+
+      // First successful transcription — a stronger quality signal than install/onboarding.
+      if (Platform.OS === "android" && !firstTranscriptionSent) {
+        firstTranscriptionSent = true;
+        try {
+          appsFlyer.logEvent("first_transcription", {});
+        } catch (e: any) {
+          console.log("[AppsFlyer] first_transcription error:", e?.message || e);
+        }
+      }
 
       // Save audio permanently
       let savedAudioUri: string | undefined;
