@@ -84,18 +84,19 @@ export default function App() {
   useEffect(() => {
     if (Platform.OS !== "android" || !APPSFLYER_DEV_KEY || APPSFLYER_DEV_KEY.startsWith("YOUR_")) return;
     try {
-      appsFlyer.init({ devKey: APPSFLYER_DEV_KEY }).catch((err: any) => {
-        console.log("[AppsFlyer] init error:", err?.message || err);
-      });
-      appsFlyer.registerSessionReadyListener(async () => {
-        try {
-          await appsFlyer.start();
-          const uid = await appsFlyer.getAppsFlyerUID();
-          console.log("[AppsFlyer] AppsFlyer UID:", uid);
-        } catch (err: any) {
-          console.log("[AppsFlyer] start error:", err?.message || err);
+      appsFlyer.initSdk(
+        { devKey: APPSFLYER_DEV_KEY, isDebug: false },
+        (result: any) => {
+          console.log("[AppsFlyer] init success:", result);
+          appsFlyer.getAppsFlyerUID((err: any, uid: string) => {
+            if (err) console.log("[AppsFlyer] UID error:", err);
+            else console.log("[AppsFlyer] AppsFlyer UID:", uid);
+          });
+        },
+        (error: any) => {
+          console.log("[AppsFlyer] init error:", error?.message || error);
         }
-      });
+      );
     } catch (e: any) {
       console.log("[AppsFlyer] setup error:", e?.message || e);
     }
