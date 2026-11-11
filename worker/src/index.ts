@@ -200,8 +200,8 @@ function jsonResponse(data: unknown, status: number, headers: Record<string, str
   });
 }
 
-function htmlResponse(html: string, headers: Record<string, string>) {
-  return new Response(html, { status: 200, headers: { ...headers, "Content-Type": "text/html; charset=utf-8" } });
+function htmlResponse(html: string, headers: Record<string, string>, status = 200) {
+  return new Response(html, { status, headers: { ...headers, "Content-Type": "text/html; charset=utf-8" } });
 }
 
 const LANDING_HTML = `<!doctype html>
@@ -210,6 +210,7 @@ const LANDING_HTML = `<!doctype html>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Meeting Transcriber · FreeSurf</title>
+<link rel="canonical" href="https://transcribe.freesurf.tools/"/>
 <meta name="description" content="Turn audio recordings and meetings into clean, searchable transcripts with speaker labels."/>
 <style>
   :root { color-scheme: light dark; --bg:#ffffff; --text:#1d1b18; --muted:#8a8178; --brand:#1d1b18; --border:#e6e4df; }
@@ -248,6 +249,9 @@ const LANDING_HTML = `<!doctype html>
 </body>
 </html>`;
 
+const NOT_FOUND_HTML = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="robots" content="noindex"/><title>Page not found · FreeSurf</title><style>body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center;padding:24px}@media (prefers-color-scheme: dark){body{background:#0a0a0c;color:#fff}a{color:#6b8cff}}</style></head><body><div><h1>Page not found</h1><p><a href="/">Go to the transcriber</a></p></div></body></html>`;
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -260,6 +264,15 @@ export default {
 
     // Landing page for browsers; keep the API on /api/transcribe.
     if (request.method === "GET") {
+      if (url.pathname === "/robots.txt") {
+        const txt = `User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://transcribe.freesurf.tools/sitemap.xml
+`;
+        return new Response(txt, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+      }
       if (url.pathname === "/sitemap.xml") {
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -281,7 +294,10 @@ export default {
         const used = await readUsage(env, userId, TRANSCRIBE_METRIC, month);
         return jsonResponse({ isPro, usage: { metric: TRANSCRIBE_METRIC, used, limit, reset: month } }, 200, headers);
       }
-      return htmlResponse(LANDING_HTML, headers);
+      if (url.pathname === "/" || url.pathname === "/index.html") {
+        return htmlResponse(LANDING_HTML, headers);
+      }
+      return htmlResponse(NOT_FOUND_HTML, headers, 404);
     }
 
     if (request.method !== "POST") {
