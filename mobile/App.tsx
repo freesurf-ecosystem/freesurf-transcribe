@@ -3,7 +3,6 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator, Platform } from "react-native";
-import { Audio } from "expo-av";
 import { PaperProvider, MD3DarkTheme, MD3LightTheme } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./lib/supabase";
@@ -17,11 +16,13 @@ import TranscriberScreen from "./screens/TranscriberScreen";
 import AuthScreen from "./screens/AuthScreen";
 import AboutScreen from "./screens/AboutScreen";
 import SubscriptionScreen from "./screens/SubscriptionScreen";
+import PermissionsScreen from "./screens/PermissionsScreen";
 import AIConsentScreen from "./screens/AIConsentScreen";
 import LanguageChooser from "./screens/LanguageChooser";
 import { useAppLanguage } from "./i18n";
 
-const AI_CONSENT_KEY = "freesurf-transcriber-ai-consent-v1";
+const AI_CONSENT_KEY = "freesurf-transcriber-ai-consent-v2";
+const AI_CONSENT_DECIDED_KEY = "freesurf-transcriber-ai-consent-decided-v2";
 
 const darkTheme = {
   ...MD3DarkTheme,
@@ -64,6 +65,7 @@ export type RootStackParamList = {
   Auth: undefined;
   About: undefined;
   Subscription: undefined;
+  Permissions: undefined;
   Language: undefined;
 };
 
@@ -73,11 +75,22 @@ export default function App() {
   const [session, setSession] = useState<boolean | null>(null);
   const [isDark, setIsDark] = useState(false);
   const [aiConsent, setAiConsent] = useState<boolean | null>(null);
+  const [aiConsentDecided, setAiConsentDecided] = useState<boolean | null>(null);
+  const [showAiConsent, setShowAiConsent] = useState(false);
   const { loaded: langLoaded, chosen: langChosen, setLanguage } = useAppLanguage();
   const onboardingEventSent = useRef(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(AI_CONSENT_KEY).then((v) => setAiConsent(v === "true")).catch(() => setAiConsent(false));
+    Promise.all([AsyncStorage.getItem(AI_CONSENT_KEY), AsyncStorage.getItem(AI_CONSENT_DECIDED_KEY)])
+      .then(([v, d]) => {
+        const consent = v === "true" ? true : v === "false" ? false : null;
+        setAiConsent(consent);
+        setAiConsentDecided(consent !== null || d === "true");
+      })
+      .catch(() => {
+        setAiConsent(null);
+        setAiConsentDecided(false);
+      });
   }, []);
 
   // Initialize AppsFlyer (install attribution / ad-fraud detection) at launch, before any
@@ -120,14 +133,30 @@ export default function App() {
 
   const agreeAiConsent = async () => {
     setAiConsent(true);
+    setAiConsentDecided(true);
+    setShowAiConsent(false);
     AsyncStorage.setItem(AI_CONSENT_KEY, "true").catch(() => {});
-    recordConsent();
+    AsyncStorage.setItem(AI_CONSENT_DECIDED_KEY, "true").catch(() => {});
+    recordConsent("terms");
+    recordConsent("ai_processing");
   };
 
-  // Ask for mic permission once the app opens (so the first Record isn't the permission prompt).
-  useEffect(() => {
-    if (langChosen) Audio.requestPermissionsAsync().catch(() => {});
-  }, [langChosen]);
+  const declineAiConsent = async () => {
+    setAiConsent(false);
+    setAiConsentDecided(true);
+    setShowAiConsent(false);
+    AsyncStorage.setItem(AI_CONSENT_KEY, "false").catch(() => {});
+    AsyncStorage.setItem(AI_CONSENT_DECIDED_KEY, "true").catch(() => {});
+    recordConsent("ai_processing_declined");
+  };
+
+  const disableAiConsent = async () => {
+    setAiConsent(false);
+    setAiConsentDecided(true);
+    AsyncStorage.setItem(AI_CONSENT_KEY, "false").catch(() => {});
+    AsyncStorage.setItem(AI_CONSENT_DECIDED_KEY, "true").catch(() => {});
+    recordConsent("ai_processing_revoked");
+  };
 
   // Configure RevenueCat (Google Play) once at launch. appUserID = device id so the worker
   // can verify the entitlement server-side.
@@ -149,7 +178,7 @@ export default function App() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  if (session === null || !langLoaded || aiConsent === null) {
+  if (session === null || !langLoaded || aiConsentDecided === null) {
     return <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0b1020" }}><ActivityIndicator color="#5b8cff" /></View>;
   }
 
@@ -162,11 +191,11 @@ export default function App() {
     );
   }
 
-  if (!aiConsent) {
+  if (!aiConsentDecided || showAiConsent) {
     return (
       <PaperProvider theme={isDark ? darkTheme : lightTheme}>
         <StatusBar style="light" />
-        <AIConsentScreen onAgree={agreeAiConsent} />
+        <AIConsentScreen onAgree={agreeAiConsent} onDecline={declineAiConsent} />
       </PaperProvider>
     );
   }
@@ -178,7 +207,7 @@ export default function App() {
         <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: isDark ? darkTheme.colors.background : lightTheme.colors.background } }}>
         <Stack.Screen name="Transcriber">
           {(props) => (
-            <TranscriberScreen isLoggedIn={session} onSignIn={() => props.navigation.navigate("Auth")} navigation={props.navigation} isDark={isDark} onToggleTheme={() => setIsDark(!isDark)} />
+            <TranscriberScreen isLoggedIn={session} aiConsent={Boolean(aiConsent)} onReviewAiConsent={() => setShowAiConsent(true)} onSignIn={() => props.navigation.navigate("Auth")} navigation={props.navigation} isDark={isDark} onToggleTheme={() => setIsDark(!isDark)} />
           )}
         </Stack.Screen>
         <Stack.Screen name="Auth">
@@ -194,6 +223,16 @@ export default function App() {
         <Stack.Screen name="Subscription">
           {(props) => (
             <SubscriptionScreen onBack={() => props.navigation.goBack()} />
+          )}
+        </Stack.Screen>
+        <Stack.Screen name="Permissions">
+          {(props) => (
+            <PermissionsScreen
+              aiConsent={Boolean(aiConsent)}
+              onSetAiConsent={(value) => { if (value) setShowAiConsent(true); else void disableAiConsent(); }}
+              onReviewAiConsent={() => setShowAiConsent(true)}
+              onBack={() => props.navigation.goBack()}
+            />
           )}
         </Stack.Screen>
         <Stack.Screen name="Language">

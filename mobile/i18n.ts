@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getLocales } from "expo-localization";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { extraTranslations } from "./i18nExtra";
 
 export type Strings = Record<string, string>;
 
@@ -8,13 +9,18 @@ export type Lang = string; // any ISO code present in translations
 
 export const translations: Record<Lang, Strings> = {
   en: {
-    import: "Import", record: "Record", stop: "Stop", live: "Live", liveStop: "Stop live", liveListening: "Listening...", notes: "Notes", notesUpdating: "Updating notes...", notesEmpty: "Notes will appear as the conversation develops.", saving: "Saving...", speakers: "Speakers", transcribing: "Transcribing…",
+    import: "Import", record: "Record", stop: "Stop", live: "Live", liveStop: "Stop live", liveListening: "Listening...", notes: "Notes", notesUpdating: "Updating notes...", notesEmpty: "Notes will appear as the conversation develops.", saving: "Saving...", speakers: "Speakers", permissions: "Permissions", transcribing: "Transcribing…",
     emptyState: "Tap record to start transcribing, or import an audio file.",
     untitled: "Untitled transcript", noText: "No text returned", speaker: "Speaker",
     tapToExpand: "Tap to expand...", menuSupport: "Support", menuPrivacy: "Privacy",
     menuTerms: "Terms", languageLabel: "Language", freeMinutes: "Free minutes", thisMonth: "this month",
     goPro: "Go Pro", proBadge: "PRO", proTitle: "Transcriber Pro",
     proSubtitle: "Unlimited transcription for power users.",
+    proSubscriptionTitle: "Transcriber Pro — monthly subscription",
+    proAutoRenew: "Payment is charged at confirmation. Renews automatically unless canceled at least 24 hours before the end of the current period.",
+    proCharge: "Payment is charged at confirmation.",
+    proRenewal: "Renews automatically unless canceled at least 24 hours before the end of the current period.",
+    proManage: "Manage or cancel in your App Store account settings.",
     proPrice: "$20", proPerMonth: "/ month",
     featureUnlimited: "Unlimited transcription minutes",
     featureNoAds: "No ads",
@@ -22,7 +28,9 @@ export const translations: Record<Lang, Strings> = {
     activatedMsg: "Subscription activated. Enjoy Pro!",
     restoredMsg: "Your purchases have been restored.",
     cancelAnytime: "Cancel anytime in Google Play or the App Store.",
-    termsLink: "Terms of Service", privacyLink: "Privacy Policy", eulaLink: "EULA",
+    cancelAnytimeAndroid: "Cancel anytime in Google Play.",
+    cancelAnytimeIos: "Cancel anytime in the App Store.",
+    termsLink: "Terms of Service", privacyLink: "Privacy Policy", eulaLink: "Terms of Use (EULA)",
     proNote: "Subscriptions keep the free tier free for everyone.",
     cancel: "Cancel", deleteTitle: "Delete", deleteConfirm: "Delete this transcription?", deleteAction: "Delete",
     errorTitle: "Error", permissionNeeded: "Permission needed", permissionRetry: "Please tap the record button one more time.", couldNotStartRecording: "Could not start recording.", couldNotStopRecording: "Could not stop recording.", couldNotImport: "Could not import file.", couldNotPlay: "Could not play audio.", noAudioTitle: "No audio", noAudioMessage: "Original recording not available.", transcriptionFailed: "Transcription failed.", supportedFiles: "Supported audio files: WAV, MP3, M4A, AAC, WEBM, FLAC, OGG/OPUS.", toggleDarkMode: "Toggle dark mode",
@@ -719,7 +727,7 @@ export function deviceLang(): Lang {
 
 export function translationsFor(lang: Lang): Strings {
   const en = translations[DEFAULT_LANG] ?? {};
-  return { ...en, ...(translations[lang] ?? {}) };
+  return { ...en, ...(extraTranslations.en ?? {}), ...(translations[lang] ?? {}), ...(extraTranslations[lang] ?? {}) };
 }
 
 // Module-level shared language state so every component that calls useAppLanguage()

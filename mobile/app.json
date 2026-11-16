@@ -2,7 +2,7 @@
   "expo": {
     "name": "Transcriber",
     "slug": "freesurf-transcriber",
-    "version": "0.1.14",
+    "version": "0.1.15",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -15,12 +15,12 @@
     ],
     "android": {
       "package": "tools.freesurf.transcriber",
-      "versionCode": 17
+      "versionCode": 18
     },
     "ios": {
       "bundleIdentifier": "tools.freesurf.transcriber",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "FreeSurf Transcriber uses your microphone to record meetings, interviews, and voice notes so it can turn them into text transcripts. Audio is processed on our servers and immediately deleted — nothing is stored.",
+        "NSMicrophoneUsageDescription": "FreeSurf Transcriber uses the microphone to record audio for transcription.",
         "ITSAppUsesNonExemptEncryption": false
       },
       "privacyManifests": {

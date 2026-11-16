@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, ScrollView, Alert, Linking } from "react-native";
+import { View, ScrollView, Alert, Linking, Platform } from "react-native";
 import { Text, Button, Surface, useTheme, IconButton } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Crown, Check } from "lucide-react-native";
@@ -8,6 +8,7 @@ import { translationsFor, useAppLanguage } from "../i18n";
 
 const PRO_ENTITLEMENT = "pro_transcriber";
 const PRODUCT_ID = "freesurf_transcriber_monthly";
+const APPLE_EULA_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
 
 type Props = { onBack: () => void };
 
@@ -32,7 +33,9 @@ export default function SubscriptionScreen({ onBack }: Props) {
   const [isPro, setIsPro] = useState(false);
   const [price, setPrice] = useState<string | null>(null);
 
-  const features = [T.featureUnlimited, T.featureNoAds];
+  const cancelText = Platform.OS === "android" ? T.cancelAnytimeAndroid : T.cancelAnytimeIos;
+  const renewalText = Platform.OS === "ios" ? T.proRenewalIos : T.proRenewalAndroid;
+  const features = [T.featureNoAds, T.proCharge, renewalText, cancelText];
 
   async function refreshEntitlement(info?: { entitlements: { active: Record<string, unknown> } }) {
     let customer = info;
@@ -119,6 +122,9 @@ export default function SubscriptionScreen({ onBack }: Props) {
         ) : (
           <>
             <Surface mode="flat" style={{ backgroundColor: theme.colors.surface, borderRadius: 18, padding: 20, borderWidth: 1, borderColor: theme.colors.outline, marginBottom: 16 }}>
+              <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center", marginBottom: 10 }}>
+                {T.proSubscriptionTitle}
+              </Text>
               <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "center", marginBottom: 16 }}>
                 <Text variant="displaySmall" style={{ fontWeight: "800", color: theme.colors.primary }}>{price ?? T.proPrice}</Text>
                 <Text variant="titleMedium" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 4 }}>{T.proPerMonth}</Text>
@@ -149,16 +155,19 @@ export default function SubscriptionScreen({ onBack }: Props) {
             <Button mode="text" onPress={onRestore} disabled={busy} style={{ marginTop: 6 }} labelStyle={{ fontSize: 15 }}>
               {T.restoreCta}
             </Button>
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center", marginTop: 6 }}>{T.cancelAnytime}</Text>
-            <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-              <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12, textDecorationLine: "underline" }} onPress={() => Linking.openURL("https://freesurf.tools/terms")}>{T.termsLink}</Text>
-              <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12 }}>·</Text>
-              <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12, textDecorationLine: "underline" }} onPress={() => Linking.openURL("https://freesurf.tools/privacy")}>{T.privacyLink}</Text>
-              <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12 }}>·</Text>
-              <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12, textDecorationLine: "underline" }} onPress={() => Linking.openURL("https://freesurf.tools/eula")}>{T.eulaLink}</Text>
-            </View>
           </>
         )}
+        <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+          <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12, textDecorationLine: "underline" }} onPress={() => Linking.openURL("https://freesurf.tools/terms")}>{T.termsLink}</Text>
+          <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12 }}>·</Text>
+          <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12, textDecorationLine: "underline" }} onPress={() => Linking.openURL("https://freesurf.tools/privacy")}>{T.privacyLink}</Text>
+          {Platform.OS === "ios" && (
+            <>
+              <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12 }}>·</Text>
+              <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12, textDecorationLine: "underline" }} onPress={() => Linking.openURL(APPLE_EULA_URL)}>{T.eulaLink}</Text>
+            </>
+          )}
+        </View>
       </Surface>
     </View>
   );

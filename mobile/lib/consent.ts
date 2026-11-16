@@ -1,7 +1,7 @@
 import { WORKER_URL } from "./config";
 import { getDeviceId } from "./device";
 
-export const CONSENT_VERSION = "2026-09-09";
+export const CONSENT_VERSION = "2026-11-04";
 
 /**
  * Fire-and-forget consent record. The worker keys it by account id (if signed in) or

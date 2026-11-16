@@ -26,6 +26,16 @@ const NOTES_MODEL = "Qwen/Qwen3.5-9B";
 const NOTES_MAX_INPUT_CHARS = 60000;
 const NOTES_MAX_PREVIOUS_CHARS = 20000;
 const NOTES_MAX_TOKENS = 900;
+const NOTES_LANGUAGE_NAMES: Record<string, string> = {
+  en: "English", es: "Spanish", pt: "Portuguese", hi: "Hindi", id: "Indonesian",
+  ms: "Malay", th: "Thai", vi: "Vietnamese", tl: "Filipino", de: "German",
+  fr: "French", it: "Italian", nl: "Dutch", pl: "Polish", sv: "Swedish",
+  no: "Norwegian", da: "Danish", fi: "Finnish", cs: "Czech", el: "Greek",
+  ro: "Romanian", hu: "Hungarian", uk: "Ukrainian", ru: "Russian", ar: "Arabic",
+  bn: "Bengali", ur: "Urdu", mr: "Marathi", te: "Telugu", ta: "Tamil",
+  fa: "Persian", tr: "Turkish", ko: "Korean", ja: "Japanese", zh: "Chinese",
+  ha: "Hausa",
+};
 const TRANSCRIBE_ENTITLEMENT = "pro_transcriber";
 const CONSENT_VERSION = "2026-09-09";
 const DEFAULT_MONTHLY_SECONDS = 7200; // 2 hours / month
@@ -348,8 +358,10 @@ Sitemap: https://transcribe.freesurf.tools/sitemap.xml
         return jsonResponse({ error: "Transcript too long for live notes" }, 413, headers);
       }
       const previousNotes = String(notesBody.previous_notes || "").slice(-NOTES_MAX_PREVIOUS_CHARS);
+      const notesLanguage = NOTES_LANGUAGE_NAMES[String(notesBody.language || "en")] || "English";
       const prompt = [
         "You are a meticulous lecture-style note taker maintaining cumulative notes.",
+        `Write the entire response in ${notesLanguage}, regardless of the language spoken in the transcript.`,
         "You will receive the PREVIOUS NOTES and the full updated TRANSCRIPT.",
         "Build on the previous notes; never replace them with a short summary.",
         "Keep every important fact from the previous notes, then integrate new facts into the most relevant existing topic.",

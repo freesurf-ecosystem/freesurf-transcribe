@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   View, ScrollView, Alert, Share, Linking,
-  ActivityIndicator, TextInput, TouchableOpacity, Pressable, Platform,
+  ActivityIndicator, TextInput, TouchableOpacity, Pressable, Platform, Modal,
 } from "react-native";
 import {
   Text, Card, Button, Surface, useTheme, IconButton, Divider,
@@ -25,7 +25,7 @@ const HISTORY_KEY = "freesurf-transcriber-history";
 const SPEAKER_COLORS = ["#5b8cff", "#78e6c4", "#f0a060", "#c084fc", "#60c0f0"];
 let firstTranscriptionSent = false;
 
-type Props = { isLoggedIn: boolean; onSignIn: () => void; navigation?: any; isDark?: boolean; onToggleTheme?: () => void; };
+type Props = { isLoggedIn: boolean; aiConsent: boolean; onReviewAiConsent: () => void; onSignIn: () => void; navigation?: any; isDark?: boolean; onToggleTheme?: () => void; };
 
 type Segment = { speaker: string; start: number; end: number; text: string; };
 type HistoryEntry = { id: string; title: string; text: string; segments?: Segment[]; notes?: string; speakerNames?: Record<string, string>; audioUri?: string; date: number; };
@@ -149,7 +149,7 @@ function mergeLiveSegments(previous: Segment[], incoming: Segment[]): Segment[] 
   return out.sort((a, b) => a.start - b.start);
 }
 
-export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, isDark, onToggleTheme }: Props) {
+export default function TranscriberScreen({ isLoggedIn, aiConsent, onReviewAiConsent, onSignIn, navigation, isDark, onToggleTheme }: Props) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const topPad = insets.top + 12;
@@ -172,6 +172,8 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
   const [liveElapsed, setLiveElapsed] = useState(0);
   const [notes, setNotes] = useState("");
   const [notesBusy, setNotesBusy] = useState(false);
+  const [showMicExplainer, setShowMicExplainer] = useState(false);
+  const [showAiExplainer, setShowAiExplainer] = useState(false);
   const [editingSpeaker, setEditingSpeaker] = useState<{ entryId: string; speaker: string } | null>(null);
   const [speakerDraft, setSpeakerDraft] = useState("");
 
@@ -208,16 +210,24 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
 
   async function startLiveRecording() {
     if (isLive || isProcessing) return;
+    if (!aiConsent) {
+      setShowAiExplainer(true);
+      return;
+    }
     try {
-      let perm = await Audio.requestPermissionsAsync();
+      const perm = await Audio.getPermissionsAsync();
       if (perm.status !== "granted") {
-        await new Promise(r => setTimeout(r, 500));
-        perm = await Audio.requestPermissionsAsync();
-      }
-      if (perm.status !== "granted") {
-        Alert.alert(T.permissionNeeded, T.permissionRetry);
+        setShowMicExplainer(true);
         return;
       }
+    } catch {
+      setShowMicExplainer(true);
+      return;
+    }
+    await beginLiveRecording();
+  }
+  async function beginLiveRecording() {
+    try {
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
       const { recording } = await Audio.Recording.createAsync(LIVE_RECORDING_OPTIONS, null, 500);
       recordingRef.current = recording;
@@ -524,9 +534,13 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
     );
   }
 
-  async function handleShare(item: { text?: string; segments?: Segment[]; speakerNames?: Record<string, string> }) {
-    const txt = item.segments?.length ? formatBySpeaker(item.segments, item.speakerNames) : item.text || "";
-    if (txt) await Share.share({ message: txt });
+  async function handleShare(item: { title?: string; text?: string; segments?: Segment[]; speakerNames?: Record<string, string>; notes?: string }) {
+    const parts: string[] = [];
+    if (item.title?.trim()) parts.push(item.title.trim());
+    const transcript = item.segments?.length ? formatBySpeaker(item.segments, item.speakerNames) : item.text || "";
+    if (transcript.trim()) parts.push(transcript.trim());
+    if (item.notes?.trim()) parts.push(`${T.notes}:\n${item.notes.trim()}`);
+    if (parts.length) await Share.share({ message: parts.join("\n\n") });
   }
   async function handleShareAudio(entry: HistoryEntry) {
     if (entry.audioUri && await Sharing.isAvailableAsync()) {
@@ -599,9 +613,10 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
     let lastSpeaker = "";
     for (const seg of segments) {
       const label = speakerNames?.[seg.speaker] || formatSpeaker(seg.speaker);
+      const labelWithColon = label.endsWith(":") ? label : `${label}:`;
       if (label !== lastSpeaker) {
         if (out) out += "\n\n";
-        out += label;
+        out += labelWithColon;
         lastSpeaker = label;
       }
       out += ` ${seg.text}`;
@@ -648,6 +663,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         footer={themeToggleFooter}
         menuItems={[
           { label: T.goPro, onPress: () => navigation?.navigate("Subscription") },
+          { label: T.permissions, onPress: () => navigation?.navigate("Permissions") },
           { label: T.languageLabel, onPress: () => navigation?.navigate("Language") },
           { label: T.menuSupport, onPress: () => Linking.openURL("https://freesurf.tools/support") },
           { label: T.menuPrivacy, onPress: () => Linking.openURL("https://freesurf.tools/privacy") },
@@ -858,6 +874,65 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
           </Text>
         )}
       </ScrollView>
+
+      <Modal visible={showAiExplainer} transparent animationType="fade" onRequestClose={() => setShowAiExplainer(false)}>
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.55)", justifyContent: "center", padding: 24 }}>
+          <Surface style={{ borderRadius: 18, padding: 22, backgroundColor: theme.colors.surface }}>
+            <Text variant="titleLarge" style={{ fontWeight: "800", marginBottom: 10 }}>{T.aiOffTitle}</Text>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, lineHeight: 22, marginBottom: 8 }}>
+              {T.aiOffBody1}
+            </Text>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, lineHeight: 22, marginBottom: 18 }}>
+              {T.aiOffBody2}
+            </Text>
+            <Button
+              mode="contained"
+              onPress={() => { setShowAiExplainer(false); onReviewAiConsent(); }}
+            >
+              {T.reviewAiConsent}
+            </Button>
+            <Button mode="text" onPress={() => setShowAiExplainer(false)} style={{ marginTop: 6 }}>
+              {T.notNow}
+            </Button>
+          </Surface>
+        </View>
+      </Modal>
+
+      <Modal visible={showMicExplainer} transparent animationType="fade" onRequestClose={() => setShowMicExplainer(false)}>
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.55)", justifyContent: "center", padding: 24 }}>
+          <Surface style={{ borderRadius: 18, padding: 22, backgroundColor: theme.colors.surface }}>
+            <Text variant="titleLarge" style={{ fontWeight: "800", marginBottom: 10 }}>{T.micAccessTitle}</Text>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, lineHeight: 22, marginBottom: 8 }}>
+              {T.micAccessBody1}
+            </Text>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, lineHeight: 22, marginBottom: 18 }}>
+              {T.micAccessBody2}
+            </Text>
+            <Button
+              mode="contained"
+              onPress={async () => {
+                setShowMicExplainer(false);
+                try {
+                  const perm = await Audio.requestPermissionsAsync();
+                  if (perm.status === "granted") await beginLiveRecording();
+                  else {
+                    Alert.alert(
+                      T.micOffTitle,
+                      T.micOffBody,
+                      [{ text: T.openSettings, onPress: () => Linking.openSettings() }, { text: T.cancel, style: "cancel" }]
+                    );
+                  }
+                } catch {}
+              }}
+            >
+              {T.continueLabel}
+            </Button>
+            <Button mode="text" onPress={() => setShowMicExplainer(false)} style={{ marginTop: 6 }}>
+              {T.notNow}
+            </Button>
+          </Surface>
+        </View>
+      </Modal>
 
       <Surface style={{ position: "absolute", bottom: 0, left: 0, right: 0, flexDirection: "row", padding: 12, paddingBottom: 34, gap: 8, elevation: 2 }}>
         {isLive ? (
