@@ -173,6 +173,7 @@ export default function TranscriberScreen({ isLoggedIn, aiConsent, onReviewAiCon
   const [notes, setNotes] = useState("");
   const [notesBusy, setNotesBusy] = useState(false);
   const [showMicExplainer, setShowMicExplainer] = useState(false);
+  const [micCanAskAgain, setMicCanAskAgain] = useState(true);
   const [showAiExplainer, setShowAiExplainer] = useState(false);
   const [editingSpeaker, setEditingSpeaker] = useState<{ entryId: string; speaker: string } | null>(null);
   const [speakerDraft, setSpeakerDraft] = useState("");
@@ -217,6 +218,7 @@ export default function TranscriberScreen({ isLoggedIn, aiConsent, onReviewAiCon
     try {
       const perm = await Audio.getPermissionsAsync();
       if (perm.status !== "granted") {
+        setMicCanAskAgain(Platform.OS === "ios" ? perm.status !== "denied" : perm.canAskAgain !== false);
         setShowMicExplainer(true);
         return;
       }
@@ -911,21 +913,23 @@ export default function TranscriberScreen({ isLoggedIn, aiConsent, onReviewAiCon
             <Button
               mode="contained"
               onPress={async () => {
-                setShowMicExplainer(false);
+                if (!micCanAskAgain) {
+                  Linking.openSettings();
+                  return;
+                }
                 try {
                   const perm = await Audio.requestPermissionsAsync();
-                  if (perm.status === "granted") await beginLiveRecording();
-                  else {
-                    Alert.alert(
-                      T.micOffTitle,
-                      T.micOffBody,
-                      [{ text: T.openSettings, onPress: () => Linking.openSettings() }, { text: T.cancel, style: "cancel" }]
-                    );
+                  if (perm.status === "granted") {
+                    setShowMicExplainer(false);
+                    await beginLiveRecording();
+                  } else {
+                    setMicCanAskAgain(Platform.OS === "ios" ? perm.status !== "denied" : perm.canAskAgain !== false);
+                    setShowMicExplainer(false);
                   }
                 } catch {}
               }}
             >
-              {T.continueLabel}
+              {micCanAskAgain ? T.continueLabel : T.openSettings}
             </Button>
             <Button mode="text" onPress={() => setShowMicExplainer(false)} style={{ marginTop: 6 }}>
               {T.notNow}

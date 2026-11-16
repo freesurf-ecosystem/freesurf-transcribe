@@ -9,14 +9,14 @@ export type Lang = string; // any ISO code present in translations
 
 export const translations: Record<Lang, Strings> = {
   en: {
-    import: "Import", record: "Record", stop: "Stop", live: "Live", liveStop: "Stop live", liveListening: "Listening...", notes: "Notes", notesUpdating: "Updating notes...", notesEmpty: "Notes will appear as the conversation develops.", saving: "Saving...", speakers: "Speakers", permissions: "Permissions", transcribing: "Transcribing…",
+    import: "Import", record: "Record", stop: "Stop", live: "Live", liveStop: "Stop live", liveListening: "Listening...", notes: "Notes", notesUpdating: "Updating notes...", notesEmpty: "Notes will appear as the conversation develops.", saving: "Saving...", speakers: "Speakers", permissions: "Permissions", transcribing: "Transcribing...",
     emptyState: "Tap record to start transcribing, or import an audio file.",
     untitled: "Untitled transcript", noText: "No text returned", speaker: "Speaker",
     tapToExpand: "Tap to expand...", menuSupport: "Support", menuPrivacy: "Privacy",
     menuTerms: "Terms", languageLabel: "Language", freeMinutes: "Free minutes", thisMonth: "this month",
     goPro: "Go Pro", proBadge: "PRO", proTitle: "Transcriber Pro",
     proSubtitle: "Unlimited transcription for power users.",
-    proSubscriptionTitle: "Transcriber Pro — monthly subscription",
+    proSubscriptionTitle: "Transcriber Pro - monthly subscription",
     proAutoRenew: "Payment is charged at confirmation. Renews automatically unless canceled at least 24 hours before the end of the current period.",
     proCharge: "Payment is charged at confirmation.",
     proRenewal: "Renews automatically unless canceled at least 24 hours before the end of the current period.",
@@ -727,7 +727,7 @@ export function deviceLang(): Lang {
 
 export function translationsFor(lang: Lang): Strings {
   const en = translations[DEFAULT_LANG] ?? {};
-  return { ...en, ...(extraTranslations.en ?? {}), ...(translations[lang] ?? {}), ...(extraTranslations[lang] ?? {}) };
+  return { ...en, ...(translations[lang] ?? {}), ...(extraTranslations.en ?? {}), ...(extraTranslations[lang] ?? {}) };
 }
 
 // Module-level shared language state so every component that calls useAppLanguage()

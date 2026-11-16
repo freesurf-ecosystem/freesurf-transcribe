@@ -134,6 +134,34 @@ function b64ToBytes(b64: string): Uint8Array {
   return out;
 }
 
+function patchWavHeader(input: Uint8Array): Uint8Array {
+  if (input.length < 44) return input;
+  const ascii = (offset: number, count: number) => String.fromCharCode(...input.slice(offset, offset + count));
+  if (ascii(0, 4) !== "RIFF" || ascii(8, 4) !== "WAVE") return input;
+  let offset = 12;
+  let dataOffset = -1;
+  while (offset + 8 <= input.length) {
+    const chunk = ascii(offset, 4);
+    const size = input[offset + 4] | (input[offset + 5] << 8) | (input[offset + 6] << 16) | (input[offset + 7] << 24);
+    if (chunk === "data") {
+      dataOffset = offset + 8;
+      break;
+    }
+    offset += 8 + size + (size % 2);
+  }
+  if (dataOffset < 0 || dataOffset > input.length) return input;
+  const out = new Uint8Array(input);
+  const writeU32 = (at: number, value: number) => {
+    out[at] = value & 0xff;
+    out[at + 1] = (value >> 8) & 0xff;
+    out[at + 2] = (value >> 16) & 0xff;
+    out[at + 3] = (value >> 24) & 0xff;
+  };
+  writeU32(4, out.length - 8);
+  writeU32(dataOffset - 4, out.length - dataOffset);
+  return out;
+}
+
 function sniffAudioMime(b64: string): string {
   if (/^UklGR/.test(b64)) return "audio/wav";           // RIFF....WAVE
   if (/^SUQz|^eXBs|^2bnn|^ADTS/.test(b64)) return "audio/mp4";
@@ -162,7 +190,8 @@ async function transcribeWithTogether(
   // Together defaults `language` to "en" (which translates other languages). "auto" transcribes in the
   // spoken language so Whisper can auto-detect without forcing English.
   fd.append("language", language && language !== "auto" ? language : "auto");
-  fd.append("file", new Blob([audio], { type: mime }), "audio");
+  const upload = mime === "audio/wav" ? patchWavHeader(audio) : audio;
+  fd.append("file", new Blob([upload], { type: mime }), "audio");
 
   const res = await fetch("https://api.together.ai/v1/audio/transcriptions", {
     method: "POST",
