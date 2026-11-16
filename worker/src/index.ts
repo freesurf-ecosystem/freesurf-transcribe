@@ -24,7 +24,8 @@ const TRANSCRIBE_DAILY_METRIC = "transcribe_user_seconds_day";
 const MAX_DAILY_SECONDS = 3 * 60 * 60;
 const NOTES_MODEL = "Qwen/Qwen3.5-9B";
 const NOTES_MAX_INPUT_CHARS = 60000;
-const NOTES_MAX_TOKENS = 320;
+const NOTES_MAX_PREVIOUS_CHARS = 20000;
+const NOTES_MAX_TOKENS = 900;
 const TRANSCRIBE_ENTITLEMENT = "pro_transcriber";
 const CONSENT_VERSION = "2026-09-09";
 const DEFAULT_MONTHLY_SECONDS = 7200; // 2 hours / month
@@ -339,26 +340,39 @@ Sitemap: https://transcribe.freesurf.tools/sitemap.xml
         const rl = await env.TRANSCRIBE_RATE_LIMITER.limit({ key: `notes:${notesKey}` });
         if (!rl.success) return jsonResponse({ error: "Too many note refreshes — try again shortly." }, 429, headers);
       }
-      let notesBody: { transcript?: string; language?: string } = {};
-      try { notesBody = (await request.json()) as { transcript?: string; language?: string }; } catch {}
+      let notesBody: { transcript?: string; previous_notes?: string; language?: string } = {};
+      try { notesBody = (await request.json()) as { transcript?: string; previous_notes?: string; language?: string }; } catch {}
       const transcript = String(notesBody.transcript || "").trim();
       if (!transcript) return jsonResponse({ error: "No transcript provided" }, 400, headers);
       if (transcript.length > NOTES_MAX_INPUT_CHARS) {
         return jsonResponse({ error: "Transcript too long for live notes" }, 413, headers);
       }
+      const previousNotes = String(notesBody.previous_notes || "").slice(-NOTES_MAX_PREVIOUS_CHARS);
       const prompt = [
-        "You are a live meeting note taker.",
-        "Update the notes from the transcript below. Return compact plain text under these headings:",
-        "Summary: one or two sentences.",
-        "Topics: short bullets.",
-        "Decisions: bullets, or None.",
-        "Action items: bullets with owner if stated, or None.",
-        "Open questions: bullets, or None.",
-        "Only include facts stated in the transcript. Do not invent. Keep it under 180 words. No markdown code fences.",
+        "You are a meticulous lecture-style note taker maintaining cumulative notes.",
+        "You will receive the PREVIOUS NOTES and the full updated TRANSCRIPT.",
+        "Build on the previous notes; never replace them with a short summary.",
+        "Keep every important fact from the previous notes, then integrate new facts into the most relevant existing topic.",
+        "Do not just append generic lines such as 'New Action:' or 'New Task:'; rewrite the affected topic so it reads as one coherent set of notes.",
+        "If a new topic appears, create a new section with a descriptive heading.",
+        "Use this structure where applicable:",
+        "Topic: <topic name>",
+        "- key point",
+        "  - supporting detail, definition or example",
+        "Decisions:",
+        "- decision",
+        "Action items:",
+        "- owner — task (due date if stated)",
+        "Open questions:",
+        "- question",
+        "Be detailed and faithful to the lecture. Merge duplicates. Only include facts stated in the transcript. Do not invent. No markdown code fences. Return the complete cumulative notes.",
+        "",
+        "PREVIOUS NOTES:",
+        previousNotes || "(none yet)",
         "",
         "TRANSCRIPT:",
         transcript,
-      ].join("\n");
+      ].join("\n")
       try {
         const res = await fetch("https://api.together.xyz/v1/chat/completions", {
           method: "POST",

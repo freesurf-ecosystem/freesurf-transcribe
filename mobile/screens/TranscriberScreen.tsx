@@ -178,6 +178,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
   const liveSegmentsRef = useRef<Segment[]>([]);
   const notesBusyRef = useRef(false);
   const notesLastAtRef = useRef(0);
+  const notesRef = useRef("");
   const liveTimerRef = useRef<any>(null);
   const liveRefreshRef = useRef<any>(null);
   const { lang } = useAppLanguage();
@@ -223,6 +224,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       liveSegmentsRef.current = [];
       notesLastAtRef.current = 0;
       notesBusyRef.current = false;
+      notesRef.current = "";
       setNotes("");
       setNotesBusy(false);
       setResult({ segments: [], text: "" });
@@ -313,12 +315,14 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       const res = await fetch(`${WORKER_URL}/api/notes`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Device-Id": deviceId },
-        body: JSON.stringify({ transcript, language: lang }),
+        body: JSON.stringify({ transcript, previous_notes: notesRef.current, language: lang }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `Note taker failed (${res.status})`);
       if (!liveActiveRef.current) return;
-      setNotes(String(data.notes || "").trim());
+      const nextNotes = String(data.notes || "").trim();
+      notesRef.current = nextNotes;
+      setNotes(nextNotes);
       notesLastAtRef.current = Date.now();
     } catch (e: any) {
       console.warn("[Transcriber] Notes refresh error:", e?.message ?? e);
@@ -343,13 +347,14 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         title: T.untitled,
         text,
         segments,
-        notes: notes || undefined,
+        notes: notesRef.current || undefined,
         audioUri: savedAudioUri,
         date: Date.now(),
       };
       await saveHistory([entry, ...history].slice(0, 50));
       setExpandedId(entry.id);
       liveSegmentsRef.current = [];
+      notesRef.current = "";
       setNotes("");
       setResult(null);
     } catch (e: any) {
@@ -432,7 +437,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         title: T.untitled,
         text: plainText,
         segments: data.segments || [],
-        notes: notes || undefined,
+        notes: notesRef.current || undefined,
         audioUri: savedAudioUri,
         date: Date.now(),
       };
@@ -668,7 +673,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                           <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{formatTime(seg.start)}</Text>
                         </View>
                       )}
-                      <Text variant="bodyLarge" style={{ fontSize: 22, lineHeight: 32 }}>{seg.text}</Text>
+                      <Text variant="bodyLarge" style={{ fontSize: 18, lineHeight: 28 }}>{seg.text}</Text>
                     </View>
                   );
                 })
@@ -691,7 +696,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                   <Text variant="titleMedium" style={{ fontWeight: "700" }}>{T.notes}</Text>
                   {notesBusy && <ActivityIndicator size="small" color={theme.colors.primary} />}
                 </View>
-                <Text style={{ fontSize: 16, lineHeight: 24, paddingHorizontal: 16, paddingBottom: 16, color: theme.colors.onSurface }}>
+                <Text style={{ fontSize: 18, lineHeight: 28, paddingHorizontal: 16, paddingBottom: 16, color: theme.colors.onSurface }}>
                   {notes || (notesBusy ? T.notesUpdating : T.notesEmpty)}
                 </Text>
               </Card>
@@ -786,7 +791,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                                 <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{formatTime(seg.start)}</Text>
                               </View>
                             )}
-                            <Text variant="bodyMedium" style={{ lineHeight: 21 }}>{txt}</Text>
+                            <Text variant="bodyLarge" style={{ fontSize: 18, lineHeight: 28 }}>{txt}</Text>
                           </View>
                         );
                       })}
@@ -797,13 +802,20 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                   )}
                   {(!entry.segments || entry.segments.length === 0) && (
                     <TouchableOpacity activeOpacity={0.7} onPress={() => setExpandedId(isExpanded ? null : entry.id)} style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
-                      <Text variant="bodyMedium" style={{ lineHeight: 21 }}>
+                      <Text variant="bodyLarge" style={{ fontSize: 18, lineHeight: 28 }}>
                         {isExpanded ? entry.text : entry.text.slice(0, 120) + (entry.text.length > 120 ? "..." : "")}
                       </Text>
                       {!isExpanded && entry.text.length > 120 && (
                         <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center", paddingTop: 4 }}>{T.tapToExpand}</Text>
                       )}
                     </TouchableOpacity>
+                  )}
+
+                  {isExpanded && entry.notes && (
+                    <View style={{ paddingHorizontal: 12, paddingBottom: 10 }}>
+                      <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700", letterSpacing: 0.5, marginBottom: 4 }}>{T.notes}</Text>
+                      <Text style={{ fontSize: 18, lineHeight: 28, color: theme.colors.onSurface }}>{entry.notes}</Text>
+                    </View>
                   )}
 
                   {/* Always-visible card actions (no overflow "..." menu) */}
