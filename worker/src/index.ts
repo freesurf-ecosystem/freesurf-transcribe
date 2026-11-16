@@ -21,7 +21,7 @@ export interface Env {
 
 const TRANSCRIBE_METRIC = "transcribe_seconds";
 const TRANSCRIBE_DAILY_METRIC = "transcribe_user_seconds_day";
-const MAX_DAILY_SECONDS = 3 * 60 * 60;
+const MAX_DAILY_SECONDS = 9 * 60 * 60;
 const NOTES_MODEL = "Qwen/Qwen3.5-9B";
 const NOTES_MAX_INPUT_CHARS = 60000;
 const NOTES_MAX_PREVIOUS_CHARS = 20000;
