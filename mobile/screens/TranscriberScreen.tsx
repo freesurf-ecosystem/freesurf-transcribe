@@ -562,6 +562,10 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
     setEditingSpeaker(null);
     setSpeakerDraft("");
   }
+  async function toggleEntry(entry: HistoryEntry, isExpanded: boolean) {
+    if (editingSpeaker?.entryId === entry.id) await saveSpeakerName(entry);
+    setExpandedId(isExpanded ? null : entry.id);
+  }
   async function saveRename() {
     if (!editingId || !editingTitle.trim()) { setEditingId(null); return; }
     await saveHistory(history.map(e => e.id === editingId ? { ...e, title: editingTitle.trim() } : e));
@@ -709,34 +713,43 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
               const isExpanded = expandedId === entry.id;
               return (
                 <Card key={entry.id} mode="contained" style={{ marginBottom: 8 }}>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => setExpandedId(isExpanded ? null : entry.id)}>
-                    <View style={{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 6 }}>
-                      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                        <View style={{ flex: 1 }}>
+                  <View style={{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 6 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center" }}>
                           {isEditing ? (
                             <TextInput
-                              style={{ fontSize: 14, fontWeight: "600", color: theme.colors.onSurface, borderBottomWidth: 1, borderBottomColor: theme.colors.primary, paddingVertical: 4 }}
+                              style={{ fontSize: 14, fontWeight: "600", color: theme.colors.onSurface, borderBottomWidth: 1, borderBottomColor: theme.colors.primary, paddingVertical: 4, flex: 1 }}
                               value={editingTitle} onChangeText={setEditingTitle}
                               onSubmitEditing={saveRename} onBlur={saveRename} autoFocus selectTextOnFocus
                             />
                           ) : (
-                            <Text variant="bodyMedium" style={{ fontWeight: "600" }} numberOfLines={1}>{entry.title}</Text>
+                            <Pressable style={{ flexShrink: 1 }} onPress={() => void toggleEntry(entry, isExpanded)}>
+                              <Text variant="bodyMedium" style={{ fontWeight: "600" }} numberOfLines={1}>{entry.title}</Text>
+                            </Pressable>
                           )}
+                          {isExpanded && !isEditing && (
+                            <Pressable onPress={() => startRename(entry)} hitSlop={8} style={{ padding: 4 }}>
+                              <Pencil size={14} color={theme.colors.onSurfaceVariant} />
+                            </Pressable>
+                          )}
+                        </View>
+                        <Pressable onPress={() => void toggleEntry(entry, isExpanded)}>
                           <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
                             {new Date(entry.date).toLocaleDateString()} · {new Date(entry.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                           </Text>
-                        </View>
-                        <View style={{ flexDirection: "row", alignItems: "center" }}>
-                          {entry.audioUri && (
-                            <IconButton
-                              icon={() => playingAudioId === entry.id && isPlayingAudio ? <Pause size={16} color={theme.colors.primary} /> : <Play size={16} color={theme.colors.onSurfaceVariant} />}
-                              size={20} onPress={() => playAudio(entry)} style={{ margin: 0 }}
-                            />
-                          )}
-                        </View>
+                        </Pressable>
+                      </View>
+                      <View style={{ flexDirection: "row", alignItems: "center" }}>
+                        {entry.audioUri && (
+                          <IconButton
+                            icon={() => playingAudioId === entry.id && isPlayingAudio ? <Pause size={16} color={theme.colors.primary} /> : <Play size={16} color={theme.colors.onSurfaceVariant} />}
+                            size={20} onPress={() => playAudio(entry)} style={{ margin: 0 }}
+                          />
+                        )}
                       </View>
                     </View>
-                  </TouchableOpacity>
+                  </View>
 
                   {renderScrub(entry)}
                   {isExpanded && entry.segments && entry.segments.length > 0 && (
@@ -776,7 +789,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                     </View>
                   )}
                   {entry.segments && entry.segments.length > 0 && (
-<TouchableOpacity activeOpacity={0.7} onPress={() => setExpandedId(isExpanded ? null : entry.id)} style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
+<TouchableOpacity activeOpacity={0.7} onPress={() => void toggleEntry(entry, isExpanded)} style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
                       {entry.segments.slice(0, isExpanded ? entry.segments.length : 2).map((seg: Segment, i: number) => {
                         const prev = i > 0 ? entry.segments![i - 1] : null;
                         const showSpeaker = !prev || prev.speaker !== seg.speaker;
@@ -801,7 +814,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                     </TouchableOpacity>
                   )}
                   {(!entry.segments || entry.segments.length === 0) && (
-                    <TouchableOpacity activeOpacity={0.7} onPress={() => setExpandedId(isExpanded ? null : entry.id)} style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
+                    <TouchableOpacity activeOpacity={0.7} onPress={() => void toggleEntry(entry, isExpanded)} style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
                       <Text variant="bodyLarge" style={{ fontSize: 18, lineHeight: 28 }}>
                         {isExpanded ? entry.text : entry.text.slice(0, 120) + (entry.text.length > 120 ? "..." : "")}
                       </Text>
