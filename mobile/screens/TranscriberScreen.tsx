@@ -133,12 +133,18 @@ function mergeLiveSegments(previous: Segment[], incoming: Segment[]): Segment[] 
       map.set(label, `SPEAKER_${String(next++).padStart(2, "0")}`);
     }
   }
+  const previousSpeakerCount = new Set(previous.map(s => s.speaker)).size;
+  const incomingSpeakerCount = new Set(incoming.map(s => s.speaker)).size;
+  const preservePreviousSpeakers = previousSpeakerCount > 1 && incomingSpeakerCount < previousSpeakerCount;
   const stabilized = incoming.map(s => ({ ...s, speaker: map.get(s.speaker) || s.speaker }));
   const out = [...previous];
   for (const s of stabilized) {
     const idx = out.findIndex(p => overlapSeconds(p, s) > 0.35 || Math.abs(p.start - s.start) < 0.25);
-    if (idx >= 0) out[idx] = s;
-    else out.push(s);
+    if (idx >= 0) {
+      out[idx] = preservePreviousSpeakers ? { ...s, speaker: out[idx].speaker } : s;
+    } else {
+      out.push(s);
+    }
   }
   return out.sort((a, b) => a.start - b.start);
 }
@@ -290,7 +296,9 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         ms: Date.now() - refreshStartedAt,
         duration: data.duration,
         incomingSegments: data.segments?.length ?? 0,
+        incomingSpeakers: new Set((data.segments || []).map((s: Segment) => s.speaker)).size,
         keptSegments: merged.length,
+        keptSpeakers: new Set(merged.map((s: Segment) => s.speaker)).size,
         firstStart: data.segments?.[0]?.start,
         lastEnd: data.segments?.length ? data.segments[data.segments.length - 1].end : null,
       });
