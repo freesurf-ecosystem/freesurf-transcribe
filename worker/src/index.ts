@@ -14,20 +14,33 @@ export interface Env {
   // RevenueCat secret API key (Cloudflare secret). When set, the worker verifies the
   // user's Pro entitlement server-side by device id and lets Pro bypass the allowance.
   REVENUECAT_SECRET_KEY?: string;
+  TRANSCRIBE_RATE_LIMITER?: {
+    limit: (opts: { key: string }) => Promise<{ success: boolean }>;
+  };
 }
 
 const TRANSCRIBE_METRIC = "transcribe_seconds";
+const TRANSCRIBE_DAILY_METRIC = "transcribe_user_seconds_day";
+const MAX_DAILY_SECONDS = 3 * 60 * 60;
+const NOTES_MODEL = "Qwen/Qwen3.5-9B";
+const NOTES_MAX_INPUT_CHARS = 60000;
+const NOTES_MAX_TOKENS = 320;
 const TRANSCRIBE_ENTITLEMENT = "pro_transcriber";
 const CONSENT_VERSION = "2026-09-09";
 const DEFAULT_MONTHLY_SECONDS = 7200; // 2 hours / month
 const DEFAULT_ASR_MODEL = "nvidia/parakeet-tdt-0.6b-v3";
 const DEFAULT_MULTILINGUAL_ASR_MODEL = "openai/whisper-large-v3";
+// Hard-coded request ceiling for live/full-audio refreshes. Change only in a new deploy.
+const MAX_AUDIO_BASE64_CHARS = 28_000_000;
 
 function srHeaders(env: Env): Record<string, string> {
   return { apikey: env.SUPABASE_SECRET_KEY || "", Authorization: `Bearer ${env.SUPABASE_SECRET_KEY || ""}` };
 }
 function monthStartIso(now: Date): string {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 10);
+}
+function dayStartIso(now: Date): string {
+  return now.toISOString().slice(0, 10);
 }
 async function authedUserId(env: Env, authHeader: string): Promise<string | null> {
   if (!authHeader.startsWith("Bearer ") || !env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return null;
@@ -317,6 +330,62 @@ Sitemap: https://transcribe.freesurf.tools/sitemap.xml
       return jsonResponse({ ok }, ok ? 200 : 500, headers);
     }
 
+    if (url.pathname === "/api/notes") {
+      if (!env.TOGETHER_API_KEY) {
+        return jsonResponse({ error: "Note taker not configured" }, 500, headers);
+      }
+      const notesKey = deviceIdOf(request) || request.headers.get("CF-Connecting-IP") || "anonymous";
+      if (env.TRANSCRIBE_RATE_LIMITER) {
+        const rl = await env.TRANSCRIBE_RATE_LIMITER.limit({ key: `notes:${notesKey}` });
+        if (!rl.success) return jsonResponse({ error: "Too many note refreshes — try again shortly." }, 429, headers);
+      }
+      let notesBody: { transcript?: string; language?: string } = {};
+      try { notesBody = (await request.json()) as { transcript?: string; language?: string }; } catch {}
+      const transcript = String(notesBody.transcript || "").trim();
+      if (!transcript) return jsonResponse({ error: "No transcript provided" }, 400, headers);
+      if (transcript.length > NOTES_MAX_INPUT_CHARS) {
+        return jsonResponse({ error: "Transcript too long for live notes" }, 413, headers);
+      }
+      const prompt = [
+        "You are a live meeting note taker.",
+        "Update the notes from the transcript below. Return compact plain text under these headings:",
+        "Summary: one or two sentences.",
+        "Topics: short bullets.",
+        "Decisions: bullets, or None.",
+        "Action items: bullets with owner if stated, or None.",
+        "Open questions: bullets, or None.",
+        "Only include facts stated in the transcript. Do not invent. Keep it under 180 words. No markdown code fences.",
+        "",
+        "TRANSCRIPT:",
+        transcript,
+      ].join("\n");
+      try {
+        const res = await fetch("https://api.together.xyz/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${env.TOGETHER_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: NOTES_MODEL,
+            messages: [
+              { role: "system", content: "You turn live speech transcripts into accurate, compact meeting notes. Never invent details." },
+              { role: "user", content: prompt },
+            ],
+            temperature: 0.2,
+            max_tokens: NOTES_MAX_TOKENS,
+            chat_template_kwargs: { enable_thinking: false },
+          }),
+        });
+        const data = (await res.json()) as any;
+        if (!res.ok) {
+          return jsonResponse({ error: data?.error?.message || data?.message || `Note taker error ${res.status}` }, 502, headers);
+        }
+        const notes = String(data?.choices?.[0]?.message?.content || "").trim();
+        if (!notes) return jsonResponse({ error: "Note taker returned no text" }, 502, headers);
+        return jsonResponse({ notes }, 200, headers);
+      } catch (e: unknown) {
+        return jsonResponse({ error: e instanceof Error ? e.message : "Note taker failed" }, 500, headers);
+      }
+    }
+
     if (url.pathname !== "/api/transcribe") {
       return jsonResponse({ error: "Not found" }, 404, headers);
     }
@@ -325,34 +394,64 @@ Sitemap: https://transcribe.freesurf.tools/sitemap.xml
       return jsonResponse({ error: "Transcription not configured" }, 500, headers);
     }
 
+    const deviceId = deviceIdOf(request);
+    const isPro = deviceId ? await rcIsPro(env, deviceId) : false;
+
+    // Hard-coded abuse throttle (configured in wrangler.toml, not a dashboard toggle).
+    // Applies to everyone, including Pro; the Pro exemption is only for the daily allowance.
+    if (env.TRANSCRIBE_RATE_LIMITER) {
+      const key = deviceId || request.headers.get("CF-Connecting-IP") || "anonymous";
+      const rl = await env.TRANSCRIBE_RATE_LIMITER.limit({ key: `transcribe:${key}` });
+      if (!rl.success) {
+        return jsonResponse({ error: "Too many requests — try again shortly." }, 429, headers);
+      }
+    }
+
     try {
-      const body = (await request.json()) as { audio_base64: string; language?: string };
+      const body = (await request.json()) as { audio_base64: string; language?: string; new_audio_seconds?: number };
       if (!body.audio_base64) {
         return jsonResponse({ error: "No audio data provided" }, 400, headers);
+      }
+      if (body.audio_base64.length > MAX_AUDIO_BASE64_CHARS) {
+        return jsonResponse({ error: "Audio clip too large" }, 413, headers);
       }
 
       // Monthly free-allowance gate (only active when Supabase metering is configured).
       // Anonymous-first: identity = signed-in account OR the client's device id (X-Device-Id).
       // Duration is only known after transcription, so we pre-block when the cap is already
       // reached, then add this clip's seconds after a successful run.
-      let meter: { userId: string; month: string; limit: number } | null = null;
-      if (env.USAGE_METERING === "on" && env.SUPABASE_SECRET_KEY && env.SUPABASE_URL) {
+      let meter: { userId: string; day: string; month?: string; limit?: number } | null = null;
+      if (env.SUPABASE_SECRET_KEY && env.SUPABASE_URL) {
         const userId = await resolveUserId(env, request);
-        if (!userId) return jsonResponse({ error: "Missing device id" }, 401, headers);
-        const deviceId = deviceIdOf(request);
-        const isPro = deviceId ? await rcIsPro(env, deviceId) : false;
-        if (!isPro) {
-          const month = monthStartIso(new Date());
-          const limit = Math.max(0, Number(env.TRANSCRIBER_MONTHLY_SECONDS) || DEFAULT_MONTHLY_SECONDS);
-          const used = await readUsage(env, userId, TRANSCRIBE_METRIC, month);
-          if (used >= limit) {
-            return jsonResponse(
-              { error: "Monthly limit reached — try again next month.", usage: { metric: TRANSCRIBE_METRIC, used, limit, reset: month } },
-              429,
-              headers
-            );
+        if (!userId) {
+          if (env.USAGE_METERING === "on") return jsonResponse({ error: "Missing device id" }, 401, headers);
+        } else {
+          const day = dayStartIso(new Date());
+          if (!isPro) {
+            const usedToday = await readUsage(env, userId, TRANSCRIBE_DAILY_METRIC, day);
+            if (usedToday >= MAX_DAILY_SECONDS) {
+              return jsonResponse(
+                { error: "Daily limit reached — try again tomorrow.", usage: { metric: TRANSCRIBE_DAILY_METRIC, used: usedToday, limit: MAX_DAILY_SECONDS, reset: day } },
+                429,
+                headers
+              );
+            }
           }
-          meter = { userId, month, limit };
+          if (env.USAGE_METERING === "on" && !isPro) {
+            const month = monthStartIso(new Date());
+            const limit = Math.max(0, Number(env.TRANSCRIBER_MONTHLY_SECONDS) || DEFAULT_MONTHLY_SECONDS);
+            const used = await readUsage(env, userId, TRANSCRIBE_METRIC, month);
+            if (used >= limit) {
+              return jsonResponse(
+                { error: "Monthly limit reached — try again next month.", usage: { metric: TRANSCRIBE_METRIC, used, limit, reset: month } },
+                429,
+                headers
+              );
+            }
+            meter = { userId, day, month, limit };
+          } else {
+            meter = { userId, day };
+          }
         }
       }
 
@@ -372,7 +471,11 @@ Sitemap: https://transcribe.freesurf.tools/sitemap.xml
             sniffAudioMime(body.audio_base64),
             body.language
           );
-          if (meter) await incrementUsage(env, meter.userId, TRANSCRIBE_METRIC, meter.month, Math.max(1, Math.ceil(out.duration || 0)));
+          if (meter) {
+            const billable = Math.min(3600, Math.max(1, Math.ceil(body.new_audio_seconds ?? out.duration ?? 0)));
+            await incrementUsage(env, meter.userId, TRANSCRIBE_DAILY_METRIC, meter.day, billable);
+            if (meter.month) await incrementUsage(env, meter.userId, TRANSCRIBE_METRIC, meter.month, billable);
+          }
           return jsonResponse(out, 200, headers);
         } catch (e: unknown) {
           return jsonResponse({ error: e instanceof Error ? e.message : "Transcription failed" }, 500, headers);
@@ -401,7 +504,11 @@ Sitemap: https://transcribe.freesurf.tools/sitemap.xml
         return jsonResponse({ error: podData.error || "Transcription failed" }, podRes.status || 500, headers);
       }
 
-      if (meter) await incrementUsage(env, meter.userId, TRANSCRIBE_METRIC, meter.month, Math.max(1, Math.ceil(podData.duration || 0)));
+      if (meter) {
+        const billable = Math.min(3600, Math.max(1, Math.ceil(body.new_audio_seconds ?? podData.duration ?? 0)));
+        await incrementUsage(env, meter.userId, TRANSCRIBE_DAILY_METRIC, meter.day, billable);
+        if (meter.month) await incrementUsage(env, meter.userId, TRANSCRIBE_METRIC, meter.month, billable);
+      }
       return jsonResponse(podData, 200, headers);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Internal server error: " + String(e);

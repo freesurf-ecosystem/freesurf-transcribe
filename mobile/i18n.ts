@@ -8,7 +8,7 @@ export type Lang = string; // any ISO code present in translations
 
 export const translations: Record<Lang, Strings> = {
   en: {
-    import: "Import", record: "Record", stop: "Stop", transcribing: "Transcribing…",
+    import: "Import", record: "Record", stop: "Stop", live: "Live", liveStop: "Stop live", liveListening: "Listening...", notes: "Notes", notesUpdating: "Updating notes...", notesEmpty: "Notes will appear as the conversation develops.", saving: "Saving...", speakers: "Speakers", transcribing: "Transcribing…",
     emptyState: "Tap record to start transcribing, or import an audio file.",
     untitled: "Untitled transcript", noText: "No text returned", speaker: "Speaker",
     tapToExpand: "Tap to expand...", menuSupport: "Support", menuPrivacy: "Privacy",

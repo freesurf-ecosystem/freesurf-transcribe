@@ -6,11 +6,10 @@ import {
 import {
   Text, Card, Button, Surface, useTheme, IconButton, Divider,
 } from "react-native-paper";
-import { Mic, Square, FolderOpen, Share2, Trash2, EllipsisVertical, Pencil, AudioLines, Play, Pause } from "lucide-react-native";
+import { Square, Share2, Trash2, EllipsisVertical, Pencil, AudioLines, Play, Pause, Radio } from "lucide-react-native";
 import Slider from "@react-native-community/slider";
 import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system/legacy";
-import * as DocumentPicker from "expo-document-picker";
 import * as Sharing from "expo-sharing";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,6 +18,7 @@ import UsageMeter from "../components/UsageMeter";
 import { translationsFor, useAppLanguage } from "../i18n";
 
 import { WORKER_URL } from "../lib/config";
+import { LIVE_MAX_AUDIO_BYTES, LIVE_MAX_REFRESHES, LIVE_MAX_SESSION_MS, LIVE_NOTES_EARLY_MS, LIVE_NOTES_EARLY_WINDOW_MS, LIVE_NOTES_LATE_MS, LIVE_REFRESH_MS } from "../lib/liveConfig";
 import { getDeviceId } from "../lib/device";
 import appsFlyer from "react-native-appsflyer";
 const HISTORY_KEY = "freesurf-transcriber-history";
@@ -28,14 +28,127 @@ let firstTranscriptionSent = false;
 type Props = { isLoggedIn: boolean; onSignIn: () => void; navigation?: any; isDark?: boolean; onToggleTheme?: () => void; };
 
 type Segment = { speaker: string; start: number; end: number; text: string; };
-type HistoryEntry = { id: string; title: string; text: string; segments?: Segment[]; audioUri?: string; date: number; };
+type HistoryEntry = { id: string; title: string; text: string; segments?: Segment[]; notes?: string; speakerNames?: Record<string, string>; audioUri?: string; date: number; };
+
+const LIVE_RECORDING_OPTIONS: Audio.RecordingOptions = {
+  isMeteringEnabled: true,
+  android: {
+    extension: ".aac",
+    outputFormat: Audio.AndroidOutputFormat.AAC_ADTS,
+    audioEncoder: Audio.AndroidAudioEncoder.AAC,
+    sampleRate: 16000,
+    numberOfChannels: 1,
+    bitRate: 64000,
+  },
+  ios: {
+    extension: ".wav",
+    outputFormat: Audio.IOSOutputFormat.LINEARPCM,
+    audioQuality: Audio.IOSAudioQuality.HIGH,
+    sampleRate: 16000,
+    numberOfChannels: 1,
+    bitRate: 256000,
+    linearPCMBitDepth: 16,
+    linearPCMIsBigEndian: false,
+    linearPCMIsFloat: false,
+  },
+  web: {
+    mimeType: "audio/webm",
+    bitsPerSecond: 64000,
+  },
+};
+
+
+function overlapSeconds(a: Segment, b: Segment): number {
+  return Math.max(0, Math.min(a.end, b.end) - Math.max(a.start, b.start));
+}
+
+function speakerNumber(speaker: string): number {
+  const m = speaker.match(/\d+$/);
+  return m ? parseInt(m[0], 10) : 0;
+}
+
+function mergeLiveSegments(previous: Segment[], incoming: Segment[]): Segment[] {
+  if (!incoming.length) return previous;
+  if (!previous.length) {
+    const order: string[] = [];
+    for (const s of incoming) if (!order.includes(s.speaker)) order.push(s.speaker);
+    const map = new Map(order.map((s, i) => [s, `SPEAKER_${String(i).padStart(2, "0")}`]));
+    const normalized = incoming.map(s => ({ ...s, speaker: map.get(s.speaker) || s.speaker }));
+    const totals = new Map<string, number>();
+    for (const s of normalized) {
+      totals.set(s.speaker, (totals.get(s.speaker) || 0) + (s.end - s.start));
+    }
+    const out = normalized.map(s => ({ ...s }));
+    for (const [short, total] of totals) {
+      if (total >= 1.5 || totals.size <= 1) continue;
+      for (const s of out) {
+        if (s.speaker !== short) continue;
+        const mid = (s.start + s.end) / 2;
+        let best: Segment | null = null;
+        for (const other of out) {
+          if (other.speaker === short) continue;
+          const d = Math.abs((other.start + other.end) / 2 - mid);
+          if (!best || d < Math.abs((best.start + best.end) / 2 - mid)) best = other;
+        }
+        if (best) s.speaker = best.speaker;
+      }
+    }
+    return out.sort((a, b) => a.start - b.start);
+  }
+
+  const local = new Map<string, Segment[]>();
+  for (const s of incoming) {
+    if (!local.has(s.speaker)) local.set(s.speaker, []);
+    local.get(s.speaker)!.push(s);
+  }
+  const order = [...local.keys()].sort((a, b) => {
+    const sa = local.get(a)![0].start;
+    const sb = local.get(b)![0].start;
+    return sa - sb;
+  });
+  let next = 0;
+  for (const p of previous) next = Math.max(next, speakerNumber(p.speaker) + 1);
+  const map = new Map<string, string>();
+  for (const label of order) {
+    const turns = local.get(label)!;
+    const total = turns.reduce((n, s) => n + (s.end - s.start), 0);
+    const votes = new Map<string, number>();
+    for (const s of turns) {
+      for (const p of previous) {
+        const ov = overlapSeconds(s, p);
+        if (ov > 0) votes.set(p.speaker, (votes.get(p.speaker) || 0) + ov);
+      }
+    }
+    const best = [...votes.entries()].sort((a, b) => b[1] - a[1])[0];
+    if (best && best[1] >= 0.35) {
+      map.set(label, best[0]);
+    } else if (total < 1.5) {
+      const mid = (turns[0].start + turns[turns.length - 1].end) / 2;
+      let nearest: Segment | null = null;
+      for (const p of previous) {
+        if (!nearest || Math.abs((p.start + p.end) / 2 - mid) < Math.abs((nearest.start + nearest.end) / 2 - mid)) nearest = p;
+      }
+      map.set(label, nearest ? nearest.speaker : `SPEAKER_${String(next++).padStart(2, "0")}`);
+    } else {
+      map.set(label, `SPEAKER_${String(next++).padStart(2, "0")}`);
+    }
+  }
+  const stabilized = incoming.map(s => ({ ...s, speaker: map.get(s.speaker) || s.speaker }));
+  const out = [...previous];
+  for (const s of stabilized) {
+    const idx = out.findIndex(p => overlapSeconds(p, s) > 0.35 || Math.abs(p.start - s.start) < 0.25);
+    if (idx >= 0) out[idx] = s;
+    else out.push(s);
+  }
+  return out.sort((a, b) => a.start - b.start);
+}
 
 export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, isDark, onToggleTheme }: Props) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const topPad = insets.top + 12;
-  const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -49,12 +162,32 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
   const [audioDur, setAudioDur] = useState(0);   // ms (0 until loaded)
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [isLive, setIsLive] = useState(false);
+  const [liveElapsed, setLiveElapsed] = useState(0);
+  const [notes, setNotes] = useState("");
+  const [notesBusy, setNotesBusy] = useState(false);
+  const [editingSpeaker, setEditingSpeaker] = useState<{ entryId: string; speaker: string } | null>(null);
+  const [speakerDraft, setSpeakerDraft] = useState("");
 
   const recordingRef = useRef<Audio.Recording | null>(null);
+  const liveActiveRef = useRef(false);
+  const liveStartedAtRef = useRef(0);
+  const liveRefreshesRef = useRef(0);
+  const liveBusyRef = useRef(false);
+  const liveLastBilledAtRef = useRef(0);
+  const liveSegmentsRef = useRef<Segment[]>([]);
+  const notesBusyRef = useRef(false);
+  const notesLastAtRef = useRef(0);
+  const liveTimerRef = useRef<any>(null);
+  const liveRefreshRef = useRef<any>(null);
   const { lang } = useAppLanguage();
   const T = translationsFor(lang);
 
   useEffect(() => { loadHistory(); }, []);
+  useEffect(() => () => {
+    if (liveTimerRef.current) clearInterval(liveTimerRef.current);
+    if (liveRefreshRef.current) clearInterval(liveRefreshRef.current);
+  }, []);
   async function loadHistory() {
     try {
       const raw = await AsyncStorage.getItem(HISTORY_KEY);
@@ -66,7 +199,8 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
     await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(items));
   }
 
-  async function startRecording() {
+  async function startLiveRecording() {
+    if (isLive || isProcessing) return;
     try {
       let perm = await Audio.requestPermissionsAsync();
       if (perm.status !== "granted") {
@@ -78,25 +212,187 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         return;
       }
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      const { recording } = await Audio.Recording.createAsync(LIVE_RECORDING_OPTIONS, null, 500);
       recordingRef.current = recording;
-      setIsRecording(true);
+      liveActiveRef.current = true;
+      liveStartedAtRef.current = Date.now();
+      liveLastBilledAtRef.current = Date.now();
+      liveRefreshesRef.current = 0;
+      liveBusyRef.current = false;
+      setLiveElapsed(0);
+      liveSegmentsRef.current = [];
+      notesLastAtRef.current = 0;
+      notesBusyRef.current = false;
+      setNotes("");
+      setNotesBusy(false);
+      setResult({ segments: [], text: "" });
+      setIsLive(true);
+      liveTimerRef.current = setInterval(() => {
+        setLiveElapsed(Math.floor((Date.now() - liveStartedAtRef.current) / 1000));
+      }, 1000);
+      liveRefreshRef.current = setInterval(() => { void refreshLive(); }, LIVE_REFRESH_MS);
     } catch (e: any) {
-      console.error("[Transcriber] Record error:", e?.message ?? e);
+      console.error("[Transcriber] Live record error:", e?.message ?? e);
       Alert.alert(T.errorTitle, e?.message || T.couldNotStartRecording);
     }
   }
-  async function stopRecording() {
-    if (!recordingRef.current) return;
-    setIsRecording(false);
+  async function refreshLive() {
+    if (!liveActiveRef.current || liveBusyRef.current) return;
+    if (Date.now() - liveStartedAtRef.current >= LIVE_MAX_SESSION_MS || liveRefreshesRef.current >= LIVE_MAX_REFRESHES) {
+      Alert.alert(T.errorTitle, "Live session limit reached.");
+      await stopLiveRecording();
+      return;
+    }
+    const rec = recordingRef.current;
+    const uri = rec?.getURI();
+    if (!uri) return;
+    liveBusyRef.current = true;
     try {
-      await recordingRef.current.stopAndUnloadAsync();
-      const uri = recordingRef.current.getURI();
-      recordingRef.current = null;
-      if (uri) transcribeAudio(uri, uri);
-    } catch { Alert.alert(T.errorTitle, T.couldNotStopRecording); }
+      const info = await FileSystem.getInfoAsync(uri);
+      if (!info.exists) return;
+      if (typeof info.size === "number" && info.size > LIVE_MAX_AUDIO_BYTES) {
+        Alert.alert(T.errorTitle, "Live session too large.");
+        await stopLiveRecording();
+        return;
+      }
+      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+      const refreshStartedAt = Date.now();
+      if (base64.length > Math.ceil(LIVE_MAX_AUDIO_BYTES * 1.4)) {
+        Alert.alert(T.errorTitle, "Live session too large.");
+        await stopLiveRecording();
+        return;
+      }
+      const deviceId = await getDeviceId();
+      const newAudioSeconds = Math.max(1, Math.ceil((Date.now() - liveLastBilledAtRef.current) / 1000));
+      const res = await fetch(`${WORKER_URL}/api/transcribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Device-Id": deviceId },
+        body: JSON.stringify({ audio_base64: base64, language: lang }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (res.status === 429) {
+          Alert.alert(T.errorTitle, data.error || "Live limit reached.");
+          await stopLiveRecording();
+          return;
+        }
+        throw new Error(data.error || `Transcription failed (${res.status})`);
+      }
+      if (!liveActiveRef.current) return;
+      liveRefreshesRef.current += 1;
+      liveLastBilledAtRef.current = Date.now();
+      const merged = mergeLiveSegments(liveSegmentsRef.current, data.segments || []);
+      liveSegmentsRef.current = merged;
+      console.log("[Transcriber] Live refresh", {
+        base64Chars: base64.length,
+        ms: Date.now() - refreshStartedAt,
+        duration: data.duration,
+        incomingSegments: data.segments?.length ?? 0,
+        keptSegments: merged.length,
+        firstStart: data.segments?.[0]?.start,
+        lastEnd: data.segments?.length ? data.segments[data.segments.length - 1].end : null,
+      });
+      setResult({ ...data, segments: merged, text: merged.map((s: Segment) => s.text).join(" ") });
+      const elapsed = Date.now() - liveStartedAtRef.current;
+      const interval = elapsed < LIVE_NOTES_EARLY_WINDOW_MS ? LIVE_NOTES_EARLY_MS : LIVE_NOTES_LATE_MS;
+      if (Date.now() - notesLastAtRef.current >= interval) void refreshNotes();
+    } catch (e: any) {
+      console.warn("[Transcriber] Live refresh error:", e?.message ?? e);
+    } finally {
+      liveBusyRef.current = false;
+    }
   }
-  async function transcribeAudio(audioUri: string, originalUri?: string, isImport?: boolean) {
+  async function refreshNotes() {
+    if (!liveActiveRef.current || notesBusyRef.current) return;
+    const transcript = formatBySpeaker(liveSegmentsRef.current).trim();
+    if (!transcript) return;
+    notesBusyRef.current = true;
+    setNotesBusy(true);
+    try {
+      const deviceId = await getDeviceId();
+      const res = await fetch(`${WORKER_URL}/api/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Device-Id": deviceId },
+        body: JSON.stringify({ transcript, language: lang }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Note taker failed (${res.status})`);
+      if (!liveActiveRef.current) return;
+      setNotes(String(data.notes || "").trim());
+      notesLastAtRef.current = Date.now();
+    } catch (e: any) {
+      console.warn("[Transcriber] Notes refresh error:", e?.message ?? e);
+    } finally {
+      notesBusyRef.current = false;
+      setNotesBusy(false);
+    }
+  }
+  async function saveLiveTranscript(uri: string) {
+    const segments = liveSegmentsRef.current;
+    const text = segments.map(s => s.text).join(" ").trim() || String(result?.text || "").trim();
+    if (!segments.length && !text) {
+      await transcribeAudio(uri, uri);
+      return;
+    }
+    setIsProcessing(true);
+    setIsSaving(true);
+    try {
+      const savedAudioUri = await copyAudioToLibrary(uri);
+      const entry: HistoryEntry = {
+        id: Date.now().toString(),
+        title: T.untitled,
+        text,
+        segments,
+        notes: notes || undefined,
+        audioUri: savedAudioUri,
+        date: Date.now(),
+      };
+      await saveHistory([entry, ...history].slice(0, 50));
+      setExpandedId(entry.id);
+      liveSegmentsRef.current = [];
+      setNotes("");
+      setResult(null);
+    } catch (e: any) {
+      Alert.alert(T.errorTitle, e?.message || T.transcriptionFailed);
+    } finally {
+      setIsProcessing(false);
+      setIsSaving(false);
+    }
+  }
+  async function stopLiveRecording() {
+    if (!liveActiveRef.current) return;
+    liveActiveRef.current = false;
+    setIsLive(false);
+    if (liveTimerRef.current) clearInterval(liveTimerRef.current);
+    if (liveRefreshRef.current) clearInterval(liveRefreshRef.current);
+    liveTimerRef.current = null;
+    liveRefreshRef.current = null;
+    const rec = recordingRef.current;
+    recordingRef.current = null;
+    if (!rec) return;
+    try {
+      await rec.stopAndUnloadAsync();
+      const uri = rec.getURI();
+      if (uri) await saveLiveTranscript(uri);
+    } catch {
+      Alert.alert(T.errorTitle, T.couldNotStopRecording);
+    }
+  }
+  async function copyAudioToLibrary(sourceUri: string): Promise<string | undefined> {
+    const audioDir = FileSystem.documentDirectory + "transcriber-audio/";
+    await FileSystem.makeDirectoryAsync(audioDir, { intermediates: true }).catch(() => {});
+    if (!sourceUri || sourceUri.startsWith(audioDir)) return undefined;
+    const ext = (sourceUri.split(".").pop() || "m4a").split("?")[0] || "m4a";
+    const destUri = audioDir + `recording-${Date.now()}.${ext}`;
+    try {
+      await FileSystem.copyAsync({ from: sourceUri, to: destUri });
+      return destUri;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async function transcribeAudio(audioUri: string, originalUri?: string) {
     setIsProcessing(true);
     setResult(null);
     try {
@@ -124,18 +420,8 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       }
 
       // Save audio permanently
-      let savedAudioUri: string | undefined;
-      const audioDir = FileSystem.documentDirectory + "transcriber-audio/";
-      await FileSystem.makeDirectoryAsync(audioDir, { intermediates: true }).catch(() => {});
       const sourceUri = originalUri || audioUri;
-      if (sourceUri && !sourceUri.startsWith(audioDir)) {
-        const fname = `recording-${Date.now()}.m4a`;
-        const destUri = audioDir + fname;
-        try {
-          await FileSystem.copyAsync({ from: sourceUri, to: destUri });
-          savedAudioUri = destUri;
-        } catch {}
-      }
+      const savedAudioUri = await copyAudioToLibrary(sourceUri);
 
       // Build display text
       const plainText = data.segments?.map((s: Segment) => s.text).join(" ") || data.text || "";
@@ -146,30 +432,20 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         title: T.untitled,
         text: plainText,
         segments: data.segments || [],
+        notes: notes || undefined,
         audioUri: savedAudioUri,
         date: Date.now(),
       };
       const updated = [entry, ...history].slice(0, 50);
       await saveHistory(updated);
       setExpandedId(entry.id); // show the full transcript immediately (not the collapsed preview)
+      liveSegmentsRef.current = [];
       setResult(null);
     } catch (e: any) {
       const msg = e?.message || T.transcriptionFailed;
-      Alert.alert(
-        T.errorTitle,
-        isImport
-          ? `${msg}\n\n${T.supportedFiles}`
-          : msg
-      );
+      Alert.alert(T.errorTitle, msg);
     }
     finally { setIsProcessing(false); }
-  }
-  async function handleImport() {
-    try {
-      const r = await DocumentPicker.getDocumentAsync({ type: ["audio/*"], copyToCacheDirectory: true });
-      if (r.canceled || !r.assets?.[0]) return;
-      transcribeAudio(r.assets[0].uri, r.assets[0].uri, true);
-    } catch { Alert.alert(T.errorTitle, T.couldNotImport); }
   }
   async function playAudio(entry: HistoryEntry) {
     if (!entry.audioUri) return;
@@ -235,8 +511,8 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
     );
   }
 
-  async function handleShare(item: { text?: string; segments?: Segment[] }) {
-    const txt = item.segments?.length ? formatBySpeaker(item.segments) : item.text || "";
+  async function handleShare(item: { text?: string; segments?: Segment[]; speakerNames?: Record<string, string> }) {
+    const txt = item.segments?.length ? formatBySpeaker(item.segments, item.speakerNames) : item.text || "";
     if (txt) await Share.share({ message: txt });
   }
   async function handleShareAudio(entry: HistoryEntry) {
@@ -262,6 +538,25 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
     setEditingTitle(entry.title);
     setOpenMenuId(null);
   }
+  function speakerName(entry: HistoryEntry, speaker: string): string {
+    return entry.speakerNames?.[speaker] || formatSpeaker(speaker);
+  }
+  function startSpeakerRename(entry: HistoryEntry, speaker: string) {
+    setExpandedId(entry.id);
+    setEditingSpeaker({ entryId: entry.id, speaker });
+    setSpeakerDraft(speakerName(entry, speaker));
+  }
+  async function saveSpeakerName(entry: HistoryEntry) {
+    if (!editingSpeaker || editingSpeaker.entryId !== entry.id) return;
+    const speaker = editingSpeaker.speaker;
+    const name = speakerDraft.trim();
+    const names = { ...(entry.speakerNames || {}) };
+    if (name && name !== formatSpeaker(speaker)) names[speaker] = name;
+    else delete names[speaker];
+    await saveHistory(history.map(e => e.id === entry.id ? { ...e, speakerNames: names } : e));
+    setEditingSpeaker(null);
+    setSpeakerDraft("");
+  }
   async function saveRename() {
     if (!editingId || !editingTitle.trim()) { setEditingId(null); return; }
     await saveHistory(history.map(e => e.id === editingId ? { ...e, title: editingTitle.trim() } : e));
@@ -281,12 +576,12 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
     return `${T.speaker} ${idx + 1}`;
   }
   // Rebuild a readable transcript grouped by speaker (keeps diarization structure for share/export).
-  function formatBySpeaker(segments?: Segment[]): string {
+  function formatBySpeaker(segments?: Segment[], speakerNames?: Record<string, string>): string {
     if (!segments?.length) return "";
     let out = "";
     let lastSpeaker = "";
     for (const seg of segments) {
-      const label = formatSpeaker(seg.speaker);
+      const label = speakerNames?.[seg.speaker] || formatSpeaker(seg.speaker);
       if (label !== lastSpeaker) {
         if (out) out += "\n\n";
         out += label;
@@ -320,6 +615,16 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          top: 0, left: 0, right: 0,
+          height: Math.max(insets.top, 24),
+          backgroundColor: theme.colors.background,
+          zIndex: 50,
+        }}
+      />
       <FloatingHamburger
         topOffset={topPad}
         colors={hbColors}
@@ -334,6 +639,14 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
       />
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: topPad + 48, paddingBottom: 120 }} keyboardShouldPersistTaps="handled">
+        {isLive && (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.error }} />
+            <Text variant="labelMedium" style={{ color: theme.colors.error, fontWeight: "700", letterSpacing: 0.8 }}>
+              {T.live} {formatTime(liveElapsed)}
+            </Text>
+          </View>
+        )}
         {result ? (
           <>
             <Card mode="contained">
@@ -347,7 +660,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                   const showSpeaker = !prev || prev.speaker !== seg.speaker;
                   const color = SPEAKER_COLORS[speakerIndex(seg.speaker) % SPEAKER_COLORS.length];
                   return (
-                    <View key={i} style={{ marginBottom: 12 }}>
+                    <View key={i} style={{ marginBottom: 12, paddingHorizontal: 16 }}>
                       {showSpeaker && (
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 3 }}>
                           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color }} />
@@ -355,12 +668,12 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                           <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{formatTime(seg.start)}</Text>
                         </View>
                       )}
-                      <Text variant="bodyMedium" style={{ lineHeight: 22 }}>{seg.text}</Text>
+                      <Text variant="bodyLarge" style={{ fontSize: 22, lineHeight: 32 }}>{seg.text}</Text>
                     </View>
                   );
                 })
               ) : (
-                <Text variant="bodyLarge" style={{ lineHeight: 24, paddingHorizontal: 16 }}>{result.text || T.noText}</Text>
+                <Text variant="bodyLarge" style={{ lineHeight: 24, paddingHorizontal: 16 }}>{result.text || (isLive ? T.liveListening : T.noText)}</Text>
               )}
               {resultMenuOpen && (
                 <View style={{ borderTopWidth: 0.5, borderTopColor: theme.colors.outline, flexDirection: "row", justifyContent: "space-around", paddingVertical: 4 }}>
@@ -372,6 +685,17 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                 <IconButton icon={() => <EllipsisVertical size={18} color={theme.colors.onSurface} />} onPress={() => setResultMenuOpen(!resultMenuOpen)} />
               </View>
             </Card>
+            {isLive && (
+              <Card mode="contained" style={{ marginTop: 12 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 }}>
+                  <Text variant="titleMedium" style={{ fontWeight: "700" }}>{T.notes}</Text>
+                  {notesBusy && <ActivityIndicator size="small" color={theme.colors.primary} />}
+                </View>
+                <Text style={{ fontSize: 16, lineHeight: 24, paddingHorizontal: 16, paddingBottom: 16, color: theme.colors.onSurface }}>
+                  {notes || (notesBusy ? T.notesUpdating : T.notesEmpty)}
+                </Text>
+              </Card>
+            )}
           </>
         ) : history.length > 0 ? (
           <>
@@ -410,6 +734,42 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                   </TouchableOpacity>
 
                   {renderScrub(entry)}
+                  {isExpanded && entry.segments && entry.segments.length > 0 && (
+                    <View style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
+                      <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700", letterSpacing: 0.5 }}>
+                        {T.speakers}
+                      </Text>
+                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+                        {Array.from(new Set(entry.segments.map((seg: Segment) => seg.speaker))).map((speaker: string) => {
+                          const isEditingSpeaker = editingSpeaker?.entryId === entry.id && editingSpeaker.speaker === speaker;
+                          if (isEditingSpeaker) {
+                            return (
+                              <TextInput
+                                key={speaker}
+                                style={{ minWidth: 130, fontSize: 14, fontWeight: "600", color: theme.colors.onSurface, borderBottomWidth: 1, borderBottomColor: theme.colors.primary, paddingVertical: 2 }}
+                                value={speakerDraft}
+                                onChangeText={setSpeakerDraft}
+                                onSubmitEditing={() => saveSpeakerName(entry)}
+                                onBlur={() => saveSpeakerName(entry)}
+                                autoFocus
+                                selectTextOnFocus
+                              />
+                            );
+                          }
+                          return (
+                            <Pressable
+                              key={speaker}
+                              onPress={() => startSpeakerRename(entry, speaker)}
+                              style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: theme.colors.surfaceVariant, borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5 }}
+                            >
+                              <Text style={{ fontSize: 13, fontWeight: "600", color: theme.colors.onSurface }}>{speakerName(entry, speaker)}</Text>
+                              <Pencil size={12} color={theme.colors.onSurfaceVariant} />
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  )}
                   {entry.segments && entry.segments.length > 0 && (
 <TouchableOpacity activeOpacity={0.7} onPress={() => setExpandedId(isExpanded ? null : entry.id)} style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
                       {entry.segments.slice(0, isExpanded ? entry.segments.length : 2).map((seg: Segment, i: number) => {
@@ -422,7 +782,7 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
                             {showSpeaker && (
                               <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
                                 <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: color }} />
-                                <Text variant="labelSmall" style={{ fontWeight: "700", color, letterSpacing: 0.5 }}>{formatSpeaker(seg.speaker)}</Text>
+                                <Text variant="labelSmall" style={{ fontWeight: "700", color, letterSpacing: 0.5 }}>{speakerName(entry, seg.speaker)}</Text>
                                 <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{formatTime(seg.start)}</Text>
                               </View>
                             )}
@@ -466,24 +826,25 @@ export default function TranscriberScreen({ isLoggedIn, onSignIn, navigation, is
         )}
       </ScrollView>
 
-      <Surface style={{ position: "absolute", bottom: 0, left: 0, right: 0, flexDirection: "row", padding: 12, paddingBottom: 34, gap: 12, elevation: 2 }}>
-        <Button mode="outlined" style={{ flex: 1 }} onPress={handleImport} disabled={isProcessing} icon={() => <FolderOpen size={18} color={theme.colors.onSurface} />}>
-          {T.import}
-        </Button>
-        {isProcessing ? (
-          <View style={{ flex: 2, flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: theme.colors.surfaceVariant, borderRadius: 100, gap: 8 }}>
-            <ActivityIndicator size="small" color={theme.colors.primary} />
-            <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>{T.transcribing}</Text>
-          </View>
-        ) : (
+      <Surface style={{ position: "absolute", bottom: 0, left: 0, right: 0, flexDirection: "row", padding: 12, paddingBottom: 34, gap: 8, elevation: 2 }}>
+        {isLive ? (
           <Button
             mode="contained"
-            style={{ flex: 2 }}
-            buttonColor={isRecording ? theme.colors.error : theme.colors.primary}
-            onPress={isRecording ? stopRecording : startRecording}
-            icon={() => isRecording ? <Square size={16} color="#fff" /> : <Mic size={16} color="#fff" />}
+            style={{ flex: 1 }}
+            buttonColor={theme.colors.error}
+            onPress={stopLiveRecording}
+            icon={() => <Square size={16} color="#fff" />}
           >
-            {isRecording ? T.stop : T.record}
+            {T.stop}
+          </Button>
+        ) : isProcessing ? (
+          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: theme.colors.surfaceVariant, borderRadius: 100, gap: 8 }}>
+            <ActivityIndicator size="small" color={theme.colors.primary} />
+            <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>{isSaving ? T.saving : T.transcribing}</Text>
+          </View>
+        ) : (
+          <Button mode="contained" style={{ flex: 1 }} onPress={startLiveRecording} icon={() => <Radio size={16} color="#fff" />}>
+            {T.record}
           </Button>
         )}
       </Surface>

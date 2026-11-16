@@ -22,6 +22,13 @@ USAGE_METERING = "off"
 #   USAGE_METERING              - "on" enables the anonymous monthly meter (also a var above)
 
 # Observability — persist Worker logs so console.* output is visible in the dashboard.
+# Hard-coded rate limit: 30 transcription requests per minute per device/IP.
+# This lives in code so it can only change with a new deploy.
+[[ratelimits]]
+name = "TRANSCRIBE_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 30, period = 60 }
+
 [observability]
 enabled = false
 head_sampling_rate = 1
