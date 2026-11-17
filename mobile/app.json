@@ -2,7 +2,7 @@
   "expo": {
     "name": "Transcriber",
     "slug": "freesurf-transcriber",
-    "version": "0.1.16",
+    "version": "0.1.17",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -15,11 +15,11 @@
     ],
     "android": {
       "package": "tools.freesurf.transcriber",
-      "versionCode": 19
+      "versionCode": 20
     },
     "ios": {
       "bundleIdentifier": "tools.freesurf.transcriber",
-      "buildNumber": "6",
+      "buildNumber": "7",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "FreeSurf Transcriber uses the microphone to record audio for transcription.",
         "ITSAppUsesNonExemptEncryption": false
